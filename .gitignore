@@ -1,0 +1,15 @@
+## IntelliJ
+#### Do NOT ignore things we need for project
+!/.idea/jsLibraryMappings.xml
+!/.idea/misc.xml
+!/.idea/runConfigurations/bin_www.xml
+#### General file and directory exclusions
+*.iws
+*.iml
+*.ipr
+/.idea
+
+## Ignore node_modules folder
+node_modules/
+
+package-lock.json
