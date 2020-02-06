@@ -10,7 +10,7 @@ module.exports = {
 		if ((typeof text) !== "string") {
 			text = text.toString();
 		}
-		var cipher = crypto.createCipheriv(algorithm, config.encyptionPassword, iv),
+		var cipher = crypto.createCipheriv(algorithm, Buffer.from(config.encryptionPassword, 'base64'), iv),
 			crypted = cipher.update(text, 'utf8', 'base64');
 		crypted += cipher.final('base64');
 		return crypted;

@@ -3,12 +3,12 @@
 module.exports = {
 	env: 'development', // 'production' for production mode
 	appURL: 'http://localhost:3000', //Fully qualified url to this app.  Must match the url in the external tool exactly (Case-sensitive)
-	encyptionPassword: 'APCGX8Or93CBmK7OVZQHeA==', //A random Base64 password for encrypting information in ajax calls
+	encryptionPassword: '47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=', //A random Base64 password for encrypting information in ajax calls
 	canvas: {
 		consumerKey: 'ChiTester', //External Tool consumer key
 		sharedSecret: 'jtnDQx934', //External Tool shared secret
-		canvasDomain: 'usu.instructure.com', //'weber.instructure.com'
-		canvasAPIKey: '???' //Your canvas API key for an account admin
+		canvasDomain: '192.168.56.101', //'weber.instructure.com'
+		canvasAPIKey: 'YwLZDgSbEN1u7qtkQM7JoNJG6xiib6P81Y1cEgHTyiCcxWztjO8g4Uct76kgFkwR' //Your canvas API key for an account admin
 	},
 	db: {
 		type: 'mssql', //'mysql', 'mssql', 'oracle'
