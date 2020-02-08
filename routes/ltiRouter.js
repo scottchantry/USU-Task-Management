@@ -21,10 +21,11 @@ router.post('/', function(req, res) {
     throw result;
   }
 
-  canvas.group({id:1}, {id:3}, function(result) {
+  var sessionID = req.session.id;
 
-  }).then(function(result) {
-    console.log(result)
+
+  canvas.getCourseGroup({id:1}, {id:3}, function(err, result) {
+    //console.log("GROUPS: ", result)
   });
   //TODO lookup or create user, course, group, etc
 /*
@@ -33,6 +34,8 @@ router.post('/', function(req, res) {
   custom_canvas_user_id: '3',
   custom_canvas_course_id: '1',
   context_title: 'Sample Course 101',
+  custom_canvas_assignment_id: '1',
+  custom_canvas_assignment_title: 'Test',
  */
 
   returnData();

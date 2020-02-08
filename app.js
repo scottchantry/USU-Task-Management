@@ -2,8 +2,11 @@ var express = require('express');
 var path = require('path');
 var url = require('url');
 var logger = require('morgan');
-var cookieParser = require('cookie-parser');
+var session = require('express-session');
 var config = require('./config');
+var jsdom = require('jsdom');
+
+global.$ = global.jQuery = (require('jquery'))(new jsdom.JSDOM().window);
 
 var ltiRouter = require('./routes/ltiRouter');
 var indexRouter = require('./routes/indexRouter');
@@ -18,10 +21,16 @@ app.disable('x-powered-by');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.set('trust-proxy', 1);
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(session({
+	secret: config.encryptionPassword,
+	resave: false,
+	saveUninitialized: true,
+	cookie: {}
+}));
 app.use(url.parse(config.appURL).pathname+'app', express.static(path.join(__dirname, 'public')));
 
 app.use(url.parse(config.appURL).pathname, indexRouter);
