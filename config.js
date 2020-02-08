@@ -12,12 +12,12 @@ module.exports = {
 	},
 	db: {
 		type: 'mssql', //'mysql', 'mssql', 'oracle'
-		host: '', //host name or ip of database server that will host log table (use double backslash if adding instancename for mssql)
-		port: '', //TCP port number to use when connecting to server (not required if using mssql instance)
-		instance: '', //MSSQL instanceName or Oracle SID/Service Name
-		name: '', //database name
-		username: '', //database username
-		password: '', //database password
+		host: 'localhost', //host name or ip of database server that will host log table (use double backslash if adding instancename for mssql)
+		port: 1433, //TCP port number to use when connecting to server (not required if using mssql instance)
+		instance: 'SQLEXPRESS', //MSSQL instanceName or Oracle SID/Service Name
+		name: 'USUTaskApp', //database name
+		username: 'taskapp', //database username
+		password: 'xIr^b0rz', //database password
 		isUTC: false //true if database stores time in UTC, false if local time
 	}
 };

@@ -1,6 +1,53 @@
 "use strict";
 
 var model = {
+    assignment: {
+        key:'id',
+        members: {
+            id:'long',
+            name:'string',
+            course:{type:"course", key:"courseID"},
+            canvasAssignmentID:'long'
+        },
+        plural:'assignments'
+    },
+    course: {
+        key:'id',
+        members: {
+            id:'long',
+            name:'string',
+            canvasCourseID:'long'
+        },
+        plural:'courses'
+    },
+    courseMembership: {
+        key:'id',
+        members: {
+            id:'long',
+            user:{type:"user", key:"userID"},
+            course:{type:"course", key:"courseID"},
+            roleID:'long'
+        },
+        plural:'courseMemberships'
+    },
+    group: {
+        key:'id',
+        members: {
+            id:'long',
+            name:'string',
+            canvasGroupID:'long'
+        },
+        plural:'groups'
+    },
+    groupMembership: {
+        key:'id',
+        members: {
+            id:'long',
+            user:{type:"user", key:"userID"},
+            group:{type:"group", key:"groupID"}
+        },
+        plural:'groupMemberships'
+    },
     session: {
         key:'id',
         members: {
@@ -22,52 +69,7 @@ var model = {
             canvasUserID:'long'
         },
         plural:'users'
-    },
-    group: {
-        key:'id',
-        members: {
-            id:'long',
-            name:'string',
-            canvasGroupID:'long'
-        },
-        plural:'groups'
-    },
-    course: {
-        key:'id',
-        members: {
-            id:'long',
-            name:'string',
-            canvasCourseID:'long'
-        },
-        plural:'courses'
-    },
-    courseMembership: {
-        key:'id',
-        members: {
-            id:'long',
-            user:{type:"user", key:"userID"},
-            course:{type:"course", key:"courseID"},
-            roleID:'long'
-        },
-        plural:'courseMemberships'
-    },
-    groupMembership: {
-        key:'id',
-        members: {
-            id:'long',
-            user:{type:"user", key:"userID"},
-            group:{type:"group", key:"groupID"}
-        },
-        plural:'groupMemberships'
-    },
-    assignment: {
-        key:'id',
-        members: {
-            id:'long',
-            name:'string',
-            course:{type:"course", key:"courseID"},
-            canvasAssignmentID:'long'
-        },
-        plural:'assignments'
     }
 };
+
+if (typeof exports !== 'undefined') exports.model=model;

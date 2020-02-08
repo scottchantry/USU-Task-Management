@@ -1,4 +1,4 @@
-CREATE TABLE Session (
+CREATE TABLE [Session] (
     id NVARCHAR(255) NOT NULL,
     created DATETIME NOT NULL,
     userID INT NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE Session (
 GO
 
 
-CREATE TABLE Users (
+CREATE TABLE [Users] (
     id INT IDENTITY(1,1) NOT NULL,
     name NVARCHAR(255) NOT NULL,
     canvasUserID INT,
@@ -25,7 +25,7 @@ CREATE TABLE Users (
 );
 GO
 
-CREATE TABLE Groups (
+CREATE TABLE [Groups] (
     id INT IDENTITY(1,1) NOT NULL,
     name NVARCHAR(255) NOT NULL,
     canvasGroupID INT,
@@ -36,7 +36,7 @@ CREATE TABLE Groups (
 );
 GO
 
-CREATE TABLE Course (
+CREATE TABLE [Course] (
     id INT IDENTITY(1,1) NOT NULL,
     name NVARCHAR(255) NOT NULL,
     canvasCourseID INT,
@@ -47,7 +47,7 @@ CREATE TABLE Course (
 );
 GO
 
-CREATE TABLE CourseMembership (
+CREATE TABLE [CourseMembership] (
     id INT IDENTITY(1,1) NOT NULL,
     userID INT NOT NULL,
     courseID INT NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE CourseMembership (
 );
 GO
 
-CREATE TABLE GroupMembership (
+CREATE TABLE [GroupMembership] (
     id INT IDENTITY(1,1) NOT NULL,
     userID INT NOT NULL,
     groupID INT NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE GroupMembership (
 );
 GO
 
-CREATE TABLE Assignment (
+CREATE TABLE [Assignment] (
     id INT IDENTITY(1,1) NOT NULL,
     name NVARCHAR(255) NOT NULL,
     courseID INT NOT NULL,

@@ -193,6 +193,11 @@ function ObjectGraph() {
     }
     Model.prototype = {
         constructor:Model,
+        reset: function() {
+            this._data = {};
+            this.length = 0;
+            //this.emit('reset');
+        },
         get: function(key, arg) {
             //arg as true is used to return the compare object.
             var val, type;
@@ -1052,3 +1057,5 @@ function getURLParams() {
     }
     return params;
 }
+
+if (typeof exports !== 'undefined') exports.ObjectGraph=ObjectGraph;

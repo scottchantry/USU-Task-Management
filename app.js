@@ -5,8 +5,18 @@ var logger = require('morgan');
 var session = require('express-session');
 var config = require('./config');
 var jsdom = require('jsdom');
+var ObjectGraph=require('./public/js/lib').ObjectGraph;
 
 global.$ = global.jQuery = (require('jquery'))(new jsdom.JSDOM().window);
+global.model = require('./public/js/model').model;
+global.running = true;
+global.og = new ObjectGraph({});
+initializeModel();
+function initializeModel() {
+	var model = require('./public/js/model').model;
+	require('./model/model').setModelMethods(model);
+	og.addSchemata(model);
+}
 
 var ltiRouter = require('./routes/ltiRouter');
 var indexRouter = require('./routes/indexRouter');
