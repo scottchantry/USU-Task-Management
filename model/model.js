@@ -57,7 +57,7 @@ function setModelMethods(schemas, og) {
             db.executeSQL(query, parameters, function(err, rows) {
                 if (err) cb(err);
                 og.add(schema.type, rows[0]);
-                //TODO need to loop through child objects and get those and build an object
+                //TODO need to loop through child objects and get those and build an object (maybe just do it manually for now??)
                 cb();
             });
 

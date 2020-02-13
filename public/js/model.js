@@ -35,6 +35,8 @@ var model = {
         members: {
             id:'long',
             name:'string',
+            course:{type:"course", key:"courseID"},
+            members:{plural:"users"},
             canvasGroupID:'long'
         },
         plural:'groups'

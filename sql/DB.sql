@@ -28,6 +28,7 @@ GO
 CREATE TABLE [Groups] (
     id INT IDENTITY(1,1) NOT NULL,
     name NVARCHAR(255) NOT NULL,
+    courseID INT NOT NULL,
     canvasGroupID INT,
     CONSTRAINT PK_Groups PRIMARY KEY CLUSTERED
     (
@@ -59,7 +60,7 @@ GO
 );
 GO*/
 
-/*CREATE TABLE [GroupMemberships] (
+CREATE TABLE [GroupMemberships] (
     id INT IDENTITY(1,1) NOT NULL,
     userID INT NOT NULL,
     groupID INT NOT NULL,
@@ -68,7 +69,7 @@ GO*/
         id
     )
 );
-GO*/
+GO
 
 CREATE TABLE [Assignments] (
     id INT IDENTITY(1,1) NOT NULL,
