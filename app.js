@@ -6,17 +6,26 @@ var session = require('express-session');
 var config = require('./config');
 var jsdom = require('jsdom');
 var ObjectGraph=require('./public/js/lib').ObjectGraph;
+var sessionInitializer = function(req, res, next) {
+	var sessionID = req.session.id;
+	if (!sessions[sessionID]) {
+		sessions[sessionID] = {
+			og:	new ObjectGraph()
+		};
+		initializeModel();
+		function initializeModel() {
+			var model = require('./public/js/model').model;
+			require('./model/model').setModelMethods(model);
+			sessions[sessionID].og.addSchemata(model);
+		}
+	}
+	next();
+};
 
 global.$ = global.jQuery = (require('jquery'))(new jsdom.JSDOM().window);
 global.model = require('./public/js/model').model;
 global.running = true;
-global.og = new ObjectGraph({});
-initializeModel();
-function initializeModel() {
-	var model = require('./public/js/model').model;
-	require('./model/model').setModelMethods(model);
-	og.addSchemata(model);
-}
+global.sessions = {};
 
 var ltiRouter = require('./routes/ltiRouter');
 var indexRouter = require('./routes/indexRouter');
@@ -41,6 +50,7 @@ app.use(session({
 	saveUninitialized: true,
 	cookie: {}
 }));
+app.use(sessionInitializer);
 app.use(url.parse(config.appURL).pathname+'app', express.static(path.join(__dirname, 'public')));
 
 app.use(url.parse(config.appURL).pathname, indexRouter);
