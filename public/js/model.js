@@ -20,7 +20,7 @@ var model = {
         },
         plural:'courses'
     },
-    courseMembership: {
+    /*courseMembership: {
         key:'id',
         members: {
             id:'long',
@@ -29,7 +29,7 @@ var model = {
             roleID:'long'
         },
         plural:'courseMemberships'
-    },
+    },*/
     group: {
         key:'id',
         members: {
@@ -39,7 +39,7 @@ var model = {
         },
         plural:'groups'
     },
-    groupMembership: {
+    /*groupMembership: {
         key:'id',
         members: {
             id:'long',
@@ -47,7 +47,7 @@ var model = {
             group:{type:"group", key:"groupID"}
         },
         plural:'groupMemberships'
-    },
+    },*/
     session: {
         key:'id',
         members: {
@@ -57,7 +57,6 @@ var model = {
             course:{type:"course", key:"courseID"},
             assignment:{type:"assignment", key:"assignmentID"},
             group:{type:"group", key:"groupID"},
-
         },
         plural:'sessions'
     },

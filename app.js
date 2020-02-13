@@ -7,18 +7,31 @@ var config = require('./config');
 var jsdom = require('jsdom');
 var ObjectGraph=require('./public/js/lib').ObjectGraph;
 var sessionInitializer = function(req, res, next) {
-	var sessionID = req.session.id;
+	var sessionID = req.session.id, sessionTimeout;
 	if (!sessions[sessionID]) {
 		sessions[sessionID] = {
-			og:	new ObjectGraph()
+			session: req.session,
+			og:	new ObjectGraph(),
+			resetTimeout: function() {
+				clearTimeout(sessionTimeout);
+				sessionTimeout=setTimeout(function(){
+					sessions[sessionID].session.destroy(function() {
+						setImmediate(function(){
+							sessions[sessionID] = {expired:true}
+						});
+					});
+				}, 10*1000);
+			}
 		};
 		initializeModel();
+		sessions[sessionID].resetTimeout();
 		function initializeModel() {
 			var model = require('./public/js/model').model;
-			require('./model/model').setModelMethods(model);
+			require('./model/model').setModelMethods(model, sessions[sessionID].og);
 			sessions[sessionID].og.addSchemata(model);
 		}
 	}
+	else sessions[sessionID].resetTimeout();
 	next();
 };
 

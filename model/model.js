@@ -5,7 +5,7 @@ module.exports = {
     setModelMethods: setModelMethods
 };
 
-function setModelMethods(schemas) {
+function setModelMethods(schemas, og) {
     var schemaNames = Object.keys(schemas);
 
     schemaNames.forEach(function(schemaName) {
@@ -41,19 +41,94 @@ function setModelMethods(schemas) {
             });
             return values
         };
+        schema.methods.getValueForSQL = function(memberName) {
+            var model=this, member = schema.members[memberName], value=model.get(memberName);
+            if (member==="string") return value && "'"+value+"'" || null;
+            else if (member==="date") return value ? value.getTime() : null;
+            else if (member==="boolean") return value?1:0;
+            else if (member==="long") return value || null;
+            else if (member.key) return value && value.get(value.schema.key) || null;
+            else return null;
+        };
         schema.methods.load = function(cb) {
             var model = this;
-            var query = "SELECT * FROM [" + schemaName + "] WHERE "+model.schema.key+"=@key";
+            var query = "SELECT * FROM [" + schema.plural + "] WHERE "+schema.key+"=@key";
             var parameters = [{name:'key', dataType:db.dataTypes.Int, value:model.get(schema.key)}];
-            db.executeSQL(query, parameters, cb);
-            //TODO need to loop through child objects and get those and build an object
+            db.executeSQL(query, parameters, function(err, rows) {
+                if (err) cb(err);
+                og.add(schema.type, rows[0]);
+                //TODO need to loop through child objects and get those and build an object
+                cb();
+            });
+
         };
-        schema.methods.save = function(objToSave, cb) {
-
-            //TODO need to compare collections to objToSave[collection] to determine if something needs to be deleted
-
+        schema.methods.save = function(cb) {
             var model = this, childObjectsBeingSaved=0;
-            Object.keys(this._data).forEach(function(key) {
+            var unsavedChanges = model.unsavedChanges();
+            if (!unsavedChanges) return cb();
+            var membersToSave=[];
+            Object.keys(schema.members).forEach(function(key) {
+                var member = this.schema.members[key], candidate;
+                if (!member) return;
+                if (key===schema.key) return;
+                if (unsavedChanges[key]) {
+                    candidate = model[key];
+                    if (og.isCollection(candidate)) {
+                        if (member.cascadeSave) {} //TODO save collection, may need to save after saving this model
+                        //TODO How to know what to delete??
+                    }
+                    else if (member.cascadeSave) {membersToSave.push(key);saveChild(candidate);}
+                    else membersToSave.push(key);
+                }
+                else if (member.type && member.key && unsavedChanges[member.key]) {
+                    membersToSave.push(key);
+                }
+            }.bind(this));
+            readyToSave();
+
+            function saveChild(candidate) {
+                if (!candidate.isNewUnsaved() && !candidate.unsavedChanges()) return;
+                childObjectsBeingSaved++;
+                candidate.save(function() {
+                    childObjectsBeingSaved--;
+                    readyToSave();
+                });
+            }
+            function readyToSave() {
+                var query, parameters;
+                //TODO need to account for SQL injection
+                if (childObjectsBeingSaved===0) {
+                    if (model.isNewUnsaved()) {
+                        query = "INSERT INTO ["+schema.plural+"] (";
+                        query+=membersToSave.map(function(memberName) {
+                           return schema.members[memberName].key || memberName;
+                        }).join(',');
+                        query+=") VALUES (";
+                        query+=membersToSave.map(function(memberName) {
+                            return model.getValueForSQL(memberName)
+                        });
+                        query+="); select @@identity as "+schema.key;
+                    }
+                    else {
+                        query = "UPDATE ["+schema.plural+"] SET ";
+                        query+=membersToSave.map(function(memberName) {
+                            var column = schema.members[memberName].key || memberName;
+                            var value = model.getValueForSQL(memberName);
+                            return column+"="+value;
+                        }).join(',');
+                        query+=" WHERE "+schema.key+"=@key";
+                        parameters = [{name:'key', dataType:db.dataTypes.Int, value:model.get(schema.key)}];
+                    }
+                    db.executeSQL(query, parameters, function(err, rows) {
+                        if (err) cb(err);
+                        model.applyUnsavedChanges(rows[0]);
+                        cb();
+                    });
+                }
+            }
+
+
+            /*Object.keys(this._data).forEach(function(key) {
                 var member = this.schema.members[key];
                 if (!member) return;
                 var candidate = this.get(key);
@@ -72,9 +147,9 @@ function setModelMethods(schemas) {
                         }
                     }
                 }
-            }.bind(this));
+            }.bind(this));*/
 
-            function saveChild(candidate, key) {
+            /*function saveChild(candidate, key) {
                 childObjectsBeingSaved++;
                 candidate.save(function() {
                    childObjectsBeingSaved--;
@@ -88,10 +163,10 @@ function setModelMethods(schemas) {
                 if (childObjectsBeingSaved===0) {
                     if (model.isNewUnsaved()) {
                         //TODO need to account for SQL injection
-                        query = "INSERT INTO ["+schema.type+"] ("+membersArray.join(',')+") VALUES ("+valuesArray.join(',')+")";
+                        query = "INSERT INTO ["+schema.plural+"] ("+membersArray.join(',')+") VALUES ("+valuesArray.join(',')+")";
                     }
                     else {
-                        query = "UPDATE ["+schema.type+"] SET ";
+                        query = "UPDATE ["+schema.plural+"] SET ";
                         var memberValuePairs=[];
                         membersArray.forEach(function(member, index) {
                            memberValuePairs.push(member+"="+valuesArray[index]);
@@ -105,7 +180,7 @@ function setModelMethods(schemas) {
                         cb();
                     });
                 }
-            }
+            }*/
         };
         schema.collectionMethods.load=function(){};
         schema.collectionMethods.save=function(){};
