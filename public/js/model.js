@@ -6,8 +6,7 @@ var model = {
         members: {
             id:'long',
             name:'string',
-            course:{type:"course", key:"courseID"},
-            canvasAssignmentID:'long'
+            course:{type:"course", key:"courseID"}
         },
         plural:'assignments'
     },
@@ -15,8 +14,7 @@ var model = {
         key:'id',
         members: {
             id:'long',
-            name:'string',
-            canvasCourseID:'long'
+            name:'string'
         },
         plural:'courses'
     },
@@ -36,8 +34,7 @@ var model = {
             id:'long',
             name:'string',
             course:{type:"course", key:"courseID"},
-            members:{plural:"users"},
-            canvasGroupID:'long'
+            members:{plural:"users"}
         },
         plural:'groups'
     },
@@ -58,7 +55,8 @@ var model = {
             user:{type:"user", key:"userID"},
             course:{type:"course", key:"courseID"},
             assignment:{type:"assignment", key:"assignmentID"},
-            group:{type:"group", key:"groupID"},
+            groups:{plural:"groups"},
+            role:'string'
         },
         plural:'sessions'
     },
@@ -67,7 +65,7 @@ var model = {
         members: {
             id:'long',
             name:'string',
-            canvasUserID:'long'
+            group:{type:"group", key:"groupID"}
         },
         plural:'users'
     }

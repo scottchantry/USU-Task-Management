@@ -1,4 +1,4 @@
-CREATE TABLE [Sessions] (
+/*CREATE TABLE [Sessions] (
     id NVARCHAR(255) NOT NULL,
     created DATETIME NOT NULL,
     userID INT NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE [Courses] (
 );
 GO
 
-/*CREATE TABLE [CourseMemberships] (
+CREATE TABLE [CourseMemberships] (
     id INT IDENTITY(1,1) NOT NULL,
     userID INT NOT NULL,
     courseID INT NOT NULL,
@@ -58,7 +58,7 @@ GO
         id
     )
 );
-GO*/
+GO
 
 CREATE TABLE [GroupMemberships] (
     id INT IDENTITY(1,1) NOT NULL,
@@ -81,4 +81,4 @@ CREATE TABLE [Assignments] (
         id
     )
 );
-GO
+GO*/

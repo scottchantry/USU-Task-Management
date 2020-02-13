@@ -21,13 +21,37 @@ router.post('/', function(req, res) {
     throw result;
   }
 
-  var sessionID = req.session.id;
+  var sessionID = req.session.id, session = sessions[sessionID], roleID=(req.body.roles==='Instructor'?1:2);
 
 
   canvas.getCourseGroup({id:1}, {id:3}, function(err, result) {
     //console.log("GROUPS: ", result)
+    var groups = result.map(function(group) {
+      return {id:group.id, name:group.name, courseID:group.course_id};
+    });
+    session.og.add('session', {
+      id:sessionID,
+      user:{id:req.body.custom_canvas_user_id, name:req.body.lis_person_name_full},
+      course:{id:req.body.custom_canvas_course_id, name:req.body.context_title},
+      assignment:{id:req.body.custom_canvas_assignment_id, name:req.body.custom_canvas_assignment_title},
+      role:roleID,
+      groups:groups
+    }, function(model) {
+      if (roleID===1) { //Instructor
+        //TODO get members for all groups
+      }
+      else if (roleID===2) model.user.group=model.groups.at(0);
+
+      //TODO load tasks, etc.
+      gotoApp();
+    });
   });
-  //TODO lookup or create user, course, group, etc
+
+  function gotoApp() {
+    res.redirect('/app/index.html');
+  }
+
+
 /*
   roles: 'Learner' or 'Instructor'
   lis_person_name_full: 'Jenalee Chantry',
@@ -38,22 +62,8 @@ router.post('/', function(req, res) {
   custom_canvas_assignment_title: 'Test',
  */
 
-  returnData();
 
-  function returnData(){
-    //TODO use data loaded from my database instead of
-    var data = {
-      canvasCourseName: req.body.context_title,
-      canvasDomain: req.body.custom_canvas_api_domain,
-      canvasCourseID: req.body.custom_canvas_course_id,
-      encryptedCourseID: utils.encrypt(req.body.custom_canvas_course_id),
-      facultySourcedid: req.body.lis_person_sourcedid
-    };
 
-    //TODO create some sort of token to pass to UI that can be used to load the current session
-    //res.render('index', data);
-    res.redirect('/app/index.html?'+new url.URLSearchParams(data).toString())
-  }
 });
 
 function validateOAuthSignature(body){
