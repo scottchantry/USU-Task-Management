@@ -1,3 +1,39 @@
+--Tasks
+CREATE TABLE [Tasks] (
+    id INT IDENTITY(1,1) NOT NULL,
+    name NVARCHAR(255) NOT NULL,
+    description NVARCHAR(MAX),
+    canvasAssignmentID INT NOT NULL,
+    startDate DATE NOT NULL, --'YYYY-MM-DD'
+    endDate DATE NOT NULL, --'YYYY-MM-DD'
+    canvasGroupID INT,
+    groupTask BIT NOT NULL, --1 yes, 0 no
+    CONSTRAINT PK_Tasks PRIMARY KEY CLUSTERED
+    (
+        id
+    )
+);
+GO
+
+CREATE TABLE [TaskAssignments] (
+    id INT IDENTITY(1,1) NOT NULL,
+    taskID INT NOT NULL,
+    canvasUserID INT,
+    status TINYINT NOT NULL, --1 Not Started, 2 In-Progress, 3 Completed
+    CONSTRAINT PK_TaskAssignments PRIMARY KEY CLUSTERED
+    (
+        id
+    )
+);
+GO
+
+--Discussions (Part of Tasks???)
+
+--Rubrics
+
+
+
+
 /*CREATE TABLE [Sessions] (
     id NVARCHAR(255) NOT NULL,
     created DATETIME NOT NULL,

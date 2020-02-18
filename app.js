@@ -20,7 +20,7 @@ var sessionInitializer = function(req, res, next) {
 							sessions[sessionID] = {expired:true}
 						});
 					});
-				}, 10*1000);
+				}, 60*60*1000);
 			}
 		};
 		initializeModel();

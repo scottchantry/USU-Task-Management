@@ -186,4 +186,39 @@ function setModelMethods(schemas, og) {
         schema.collectionMethods.save=function(){};
     });
 
+    schemas.user.methods.loadTasks = function(assignmentID, groupID, cb) {
+        var model = this;
+        var query = "SELECT * FROM [Tasks] WHERE canvasAssignmentID=@assignmentID";
+        var parameters = [{name:'assignmentID', dataType:db.dataTypes.Int, value:assignmentID}];
+        if (groupID) {
+            query+=" AND canvasGroupID=@groupID";
+            parameters.push({name:'groupID', dataType:db.dataTypes.Int, value:groupID});
+        }
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            var tasks = og.add('task', rows);
+            var tasksLoaded=0;
+            if (tasks.length===0) doneLoading();
+            tasks.forEach(function(task){
+                task.loadAssignments(function() {
+                    tasksLoaded++;
+                    doneLoading();
+                });
+            });
+            function doneLoading() {
+                if (tasksLoaded===tasks.length) cb();
+            }
+        });
+    };
+    schemas.task.methods.loadAssignments = function(cb) {
+        var model = this;
+        var query = "SELECT * FROM [TaskAssignments] WHERE taskID=@taskID";
+        var parameters = [{name:'taskID', dataType:db.dataTypes.Int, value:model.id}];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            og.add('taskAssignment', rows);
+            cb();
+        });
+    };
+
 }

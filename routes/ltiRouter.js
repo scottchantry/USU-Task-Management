@@ -21,38 +21,59 @@ router.post('/', function(req, res) {
     throw result;
   }
 
-  var sessionID = req.session.id, session = sessions[sessionID], roleID=(req.body.roles==='Instructor'?1:2);
+  var sessionID = req.session.id;
 
+  loadSession(req.session.id, mapCanvasData(req.body), function() {
+    res.redirect('/app/index.html');
+  });
 
-  canvas.getCourseGroup({id:1}, {id:3}, function(err, result) {
+});
+
+function loadSession(sessionID, canvasData, cb) {
+  var session = sessions[sessionID];
+  var tasksLoaded = false;
+
+  canvas.getCourseGroup({id:canvasData.canvasCourseID}, {id:canvasData.canvasUserID}, function(err, result) {
     //console.log("GROUPS: ", result)
     var groups = result.map(function(group) {
       return {id:group.id, name:group.name, courseID:group.course_id};
     });
+
     session.og.add('session', {
-      id:sessionID,
-      user:{id:req.body.custom_canvas_user_id, name:req.body.lis_person_name_full},
-      course:{id:req.body.custom_canvas_course_id, name:req.body.context_title},
-      assignment:{id:req.body.custom_canvas_assignment_id, name:req.body.custom_canvas_assignment_title},
-      role:roleID,
+      id:session.id,
+      user:{id:canvasData.canvasUserID, name:canvasData.canvasUserName},
+      course:{id:canvasData.canvasCourseID, name:canvasData.canvasCourseTitle},
+      assignment:{id:canvasData.canvasAssignmentID, name:canvasData.canvasAssignmentTitle},
+      role:canvasData.roleID,
       groups:groups
     }, function(model) {
-      if (roleID===1) { //Instructor
-        //TODO get members for all groups
-      }
-      else if (roleID===2) model.user.group=model.groups.at(0);
 
-      //TODO load tasks, etc.
-      gotoApp();
+      if (canvasData.roleID===1) { //Instructor
+        //TODO get members for all groups
+        //TODO load all tasks
+      }
+      else if (canvasData.roleID===2) {
+        model.user.group=model.groups.at(0);
+        model.user.loadTasks(model.course.id, groups[0].id, function() {
+          tasksLoaded=true;
+          doneLoading();
+        });
+        //TODO load rubrics
+        //TODO load discussions
+
+      }
+
     });
   });
 
-  function gotoApp() {
-    res.redirect('/app/index.html');
+  function doneLoading() {
+    if (tasksLoaded) cb();
   }
 
+}
 
-/*
+function mapCanvasData(canvasData) {
+  /*
   roles: 'Learner' or 'Instructor'
   lis_person_name_full: 'Jenalee Chantry',
   custom_canvas_user_id: '3',
@@ -61,10 +82,16 @@ router.post('/', function(req, res) {
   custom_canvas_assignment_id: '1',
   custom_canvas_assignment_title: 'Test',
  */
-
-
-
-});
+  return {
+    canvasUserID:canvasData.custom_canvas_user_id,
+    canvasUserName:canvasData.lis_person_name_full,
+    canvasCourseID:canvasData.custom_canvas_course_id,
+    canvasCourseTitle:canvasData.context_title,
+    canvasAssignmentID:canvasData.custom_canvas_assignment_id,
+    canvasAssignmentTitle:canvasData.custom_canvas_assignment_title,
+    roleID:(canvasData.roles==='Instructor'?1:2)
+  }
+}
 
 function validateOAuthSignature(body){
   var authenticSignature = body.oauth_signature;

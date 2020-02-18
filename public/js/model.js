@@ -6,7 +6,8 @@ var model = {
         members: {
             id:'long',
             name:'string',
-            course:{type:"course", key:"courseID"}
+            course:{type:"course", key:"courseID"},
+            tasks:{plural:"tasks"}
         },
         plural:'assignments'
     },
@@ -34,7 +35,8 @@ var model = {
             id:'long',
             name:'string',
             course:{type:"course", key:"courseID"},
-            members:{plural:"users"}
+            members:{plural:"users"},
+            tasks:{plural:"tasks"}
         },
         plural:'groups'
     },
@@ -59,6 +61,31 @@ var model = {
             role:'string'
         },
         plural:'sessions'
+    },
+    task: {
+        key:'id',
+        members: {
+            id:'long',
+            name:'string',
+            description:'string',
+            assignment:{type:"assignment", key:"canvasAssignmentID", reciprocal:"tasks"},
+            group:{type:"group", key:"canvasGroupID", reciprocal:"tasks"},
+            startDate:"date",
+            endDate:"date",
+            groupTask:"boolean",
+            taskAssignments:{plural:"taskAssignments"}
+        },
+        plural:'tasks'
+    },
+    taskAssignment:{
+        key:'id',
+        members: {
+            id:'long',
+            task:{type:"task", reciprocal:"taskAssignments"},
+            user:{type:"user", key:"canvasUserID"},
+            status:"long"
+        },
+        plural:'taskAssignments'
     },
     user: {
         key:'id',
