@@ -21,8 +21,6 @@ router.post('/', function(req, res) {
     throw result;
   }
 
-  var sessionID = req.session.id;
-
   loadSession(req.session.id, mapCanvasData(req.body), function() {
     res.redirect('/app/index.html');
   });
@@ -31,10 +29,9 @@ router.post('/', function(req, res) {
 
 function loadSession(sessionID, canvasData, cb) {
   var session = sessions[sessionID];
-  var tasksLoaded = false;
+  var tasksLoaded = false, groupsLoaded = false, taskDiscussionsLoaded = false, groupDiscussionsLoaded = false;
 
   canvas.getCourseGroup({id:canvasData.canvasCourseID}, {id:canvasData.canvasUserID}, function(err, result) {
-    //console.log("GROUPS: ", result)
     var groups = result.map(function(group) {
       return {id:group.id, name:group.name, courseID:group.course_id};
     });
@@ -43,31 +40,41 @@ function loadSession(sessionID, canvasData, cb) {
       id:session.id,
       user:{id:canvasData.canvasUserID, name:canvasData.canvasUserName},
       course:{id:canvasData.canvasCourseID, name:canvasData.canvasCourseTitle},
-      assignment:{id:canvasData.canvasAssignmentID, name:canvasData.canvasAssignmentTitle},
+      assignment:{id:canvasData.canvasAssignmentID, name:canvasData.canvasAssignmentTitle, courseID:canvasData.canvasCourseID},
       role:canvasData.roleID,
       groups:groups
     }, function(model) {
-
+      var loadTasksForGroupID;
       if (canvasData.roleID===1) { //Instructor
-        //TODO get members for all groups
-        //TODO load all tasks
+        //TODO anything different??
       }
       else if (canvasData.roleID===2) {
-        model.user.group=model.groups.at(0);
-        model.user.loadTasks(model.course.id, groups[0].id, function() {
-          tasksLoaded=true;
-          doneLoading();
-        });
-        //TODO load rubrics
-        //TODO load discussions
-
+        loadTasksForGroupID=model.groups.at(0).id;
       }
+      model.groups.loadMembers(function() {
+        groupsLoaded=true;
+        doneLoading();
+      });
+      model.assignment.loadTasks(loadTasksForGroupID, function() {
+        tasksLoaded=true;
+        doneLoading();
+      });
+      model.tasks.loadDiscussions(function() {
+        taskDiscussionsLoaded=true;
+        doneLoading();
+      });
+      model.groups.loadDiscussions(function() {
+        groupDiscussionsLoaded=true;
+        doneLoading();
+      });
+
+      //TODO load rubrics
 
     });
   });
 
   function doneLoading() {
-    if (tasksLoaded) cb();
+    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded) cb();
   }
 
 }

@@ -57,7 +57,7 @@ function setModelMethods(schemas, og) {
             db.executeSQL(query, parameters, function(err, rows) {
                 if (err) cb(err);
                 og.add(schema.type, rows[0]);
-                //TODO need to loop through child objects and get those and build an object (maybe just do it manually for now??)
+                //TODO need to loop through child objects and load them??
                 cb();
             });
 
@@ -186,10 +186,10 @@ function setModelMethods(schemas, og) {
         schema.collectionMethods.save=function(){};
     });
 
-    schemas.user.methods.loadTasks = function(assignmentID, groupID, cb) {
+    schemas.assignment.methods.loadTasks = function(groupID, cb) {
         var model = this;
         var query = "SELECT * FROM [Tasks] WHERE canvasAssignmentID=@assignmentID";
-        var parameters = [{name:'assignmentID', dataType:db.dataTypes.Int, value:assignmentID}];
+        var parameters = [{name:'assignmentID', dataType:db.dataTypes.Int, value:model.id}];
         if (groupID) {
             query+=" AND canvasGroupID=@groupID";
             parameters.push({name:'groupID', dataType:db.dataTypes.Int, value:groupID});
@@ -200,7 +200,7 @@ function setModelMethods(schemas, og) {
             var tasksLoaded=0;
             if (tasks.length===0) doneLoading();
             tasks.forEach(function(task){
-                task.loadAssignments(function() {
+                task.loadTaskAssignments(function(err) {
                     tasksLoaded++;
                     doneLoading();
                 });
@@ -210,7 +210,45 @@ function setModelMethods(schemas, og) {
             }
         });
     };
-    schemas.task.methods.loadAssignments = function(cb) {
+    schemas.group.methods.loadMembers = function(cb) {
+        var model = this;
+        canvas.getGroupMembers(model, function(err, users) {
+            if (err) cb(err);
+            users.forEach(function(user) {
+                og.add('user', {id:user.id, name:user.name, groupID:model.id});
+            });
+            cb();
+        });
+    };
+    schemas.group.methods.loadDiscussions = function(cb) {
+        var model = this;
+        var query = "SELECT * FROM [Discussions] WHERE canvasGroupID=@groupID";
+        var parameters = [{name:'groupID', dataType:db.dataTypes.Int, value:model.id}];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            og.add('discussion', rows);
+            cb();
+        });
+    };
+    schemas.group.collectionMethods.loadMembers = function(cb) {
+        var collection=this, groupsLoaded=0;
+        collection.forEach(function(group) {
+            group.loadMembers(function(err) {
+                groupsLoaded++;
+                if (groupsLoaded===collection.length) cb();
+            });
+        });
+    };
+    schemas.group.collectionMethods.loadDiscussions = function(cb) {
+        var collection=this, groupsLoaded=0;
+        collection.forEach(function(group) {
+            group.loadDiscussions(function(err) {
+                groupsLoaded++;
+                if (groupsLoaded===collection.length) cb();
+            });
+        });
+    };
+    schemas.task.methods.loadTaskAssignments = function(cb) {
         var model = this;
         var query = "SELECT * FROM [TaskAssignments] WHERE taskID=@taskID";
         var parameters = [{name:'taskID', dataType:db.dataTypes.Int, value:model.id}];
@@ -220,5 +258,23 @@ function setModelMethods(schemas, og) {
             cb();
         });
     };
-
+    schemas.task.methods.loadDiscussions = function(cb) {
+        var model = this;
+        var query = "SELECT * FROM [Discussions] WHERE taskID=@taskID";
+        var parameters = [{name:'taskID', dataType:db.dataTypes.Int, value:model.id}];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            og.add('discussion', rows);
+            cb();
+        });
+    };
+    schemas.task.collectionMethods.loadDiscussions = function(cb) {
+        var collection=this, tasksLoaded=0;
+        collection.forEach(function(task) {
+            task.loadDiscussions(function(err) {
+                tasksLoaded++;
+                if (tasksLoaded===collection.length) cb();
+            });
+        });
+    };
 }

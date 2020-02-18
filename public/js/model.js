@@ -29,6 +29,17 @@ var model = {
         },
         plural:'courseMemberships'
     },*/
+    discussion: {
+        key:'id',
+        members: {
+            id:'long',
+            created:'date',
+            text:'string',
+            group:{type:'group', key:'canvasGroupID', reciprocal:'discussions'},
+            task:{type:'task', key:'taskID', reciprocal:'discussions'}
+        },
+        plural:'discussions'
+    },
     group: {
         key:'id',
         members: {
@@ -36,7 +47,8 @@ var model = {
             name:'string',
             course:{type:"course", key:"courseID"},
             members:{plural:"users"},
-            tasks:{plural:"tasks"}
+            tasks:{plural:"tasks"},
+            discussions:{plural:"discussions"}
         },
         plural:'groups'
     },
@@ -73,7 +85,8 @@ var model = {
             startDate:"date",
             endDate:"date",
             groupTask:"boolean",
-            taskAssignments:{plural:"taskAssignments"}
+            taskAssignments:{plural:"taskAssignments"},
+            discussions:{plural:"discussions"}
         },
         plural:'tasks'
     },

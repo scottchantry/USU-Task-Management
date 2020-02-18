@@ -27,8 +27,19 @@ CREATE TABLE [TaskAssignments] (
 );
 GO
 
---Discussions (Part of Tasks???)
-
+--Discussions
+CREATE TABLE [Discussions] (
+    id INT IDENTITY(1,1) NOT NULL,
+    created DATETIME2 NOT NULL DEFAULT GETDATE(),
+    text NTEXT NOT NULL,
+    canvasGroupID INT,
+    taskID INT,
+    CONSTRAINT PK_Discussions PRIMARY KEY CLUSTERED
+    (
+        id
+    )
+);
+GO
 --Rubrics
 
 
