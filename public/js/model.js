@@ -46,9 +46,9 @@ var model = {
             id:'long',
             name:'string',
             course:{type:"course", key:"courseID"},
-            members:{plural:"users"},
+            members:{plural:"users", cascadeSave:true},
             tasks:{plural:"tasks"},
-            discussions:{plural:"discussions"}
+            discussions:{plural:"discussions", cascadeSave:true}
         },
         plural:'groups'
     },
@@ -64,13 +64,13 @@ var model = {
     session: {
         key:'id',
         members: {
-            id:'long',
+            id:'string',
             created:'date',
-            user:{type:"user", key:"userID"},
-            course:{type:"course", key:"courseID"},
-            assignment:{type:"assignment", key:"assignmentID"},
-            groups:{plural:"groups"},
-            role:'string'
+            user:{type:"user", key:"userID", cascadeSave:true},
+            course:{type:"course", key:"courseID", cascadeSave:true},
+            assignment:{type:"assignment", key:"assignmentID", cascadeSave:true},
+            groups:{plural:"groups", cascadeSave:true},
+            role:'long'
         },
         plural:'sessions'
     },
@@ -85,8 +85,8 @@ var model = {
             startDate:"date",
             endDate:"date",
             groupTask:"boolean",
-            taskAssignments:{plural:"taskAssignments"},
-            discussions:{plural:"discussions"}
+            taskAssignments:{plural:"taskAssignments", cascadeSave:true, cascadeDelete:true},
+            discussions:{plural:"discussions", cascadeSave:true, cascadeDelete:true}
         },
         plural:'tasks'
     },
