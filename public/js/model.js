@@ -94,7 +94,7 @@ var model = {
         key:'id',
         members: {
             id:'long',
-            task:{type:"task", reciprocal:"taskAssignments"},
+            task:{type:"task", key:"taskID", reciprocal:"taskAssignments"},
             user:{type:"user", key:"canvasUserID"},
             status:"long"
         },
@@ -105,7 +105,7 @@ var model = {
         members: {
             id:'long',
             name:'string',
-            group:{type:"group", key:"groupID"}
+            group:{type:"group", key:"groupID", reciprocal:"members"}
         },
         plural:'users'
     }

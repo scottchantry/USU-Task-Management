@@ -1,5 +1,5 @@
 var db = require('../lib/db');
-
+var canvas = require('../lib/canvas');
 
 module.exports = {
     setModelMethods: setModelMethods
@@ -232,6 +232,7 @@ function setModelMethods(schemas, og) {
     };
     schemas.group.collectionMethods.loadMembers = function(cb) {
         var collection=this, groupsLoaded=0;
+        if (collection.length===0) return cb();
         collection.forEach(function(group) {
             group.loadMembers(function(err) {
                 groupsLoaded++;
@@ -241,6 +242,7 @@ function setModelMethods(schemas, og) {
     };
     schemas.group.collectionMethods.loadDiscussions = function(cb) {
         var collection=this, groupsLoaded=0;
+        if (collection.length===0) return cb();
         collection.forEach(function(group) {
             group.loadDiscussions(function(err) {
                 groupsLoaded++;
@@ -270,6 +272,7 @@ function setModelMethods(schemas, og) {
     };
     schemas.task.collectionMethods.loadDiscussions = function(cb) {
         var collection=this, tasksLoaded=0;
+        if (collection.length===0) return cb();
         collection.forEach(function(task) {
             task.loadDiscussions(function(err) {
                 tasksLoaded++;

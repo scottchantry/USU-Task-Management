@@ -21,14 +21,14 @@ router.post('/', function(req, res) {
     throw result;
   }
 
-  loadSession(req.session.id, mapCanvasData(req.body), function() {
+  loadSession(req.session.id, mapCanvasData(req.body), function(err, sessionModel) {
     res.redirect('/app/index.html');
   });
 
 });
 
 function loadSession(sessionID, canvasData, cb) {
-  var session = sessions[sessionID];
+  var sessionCache = sessions[sessionID], sessionModel;
   var tasksLoaded = false, groupsLoaded = false, taskDiscussionsLoaded = false, groupDiscussionsLoaded = false;
 
   canvas.getCourseGroup({id:canvasData.canvasCourseID}, {id:canvasData.canvasUserID}, function(err, result) {
@@ -36,8 +36,8 @@ function loadSession(sessionID, canvasData, cb) {
       return {id:group.id, name:group.name, courseID:group.course_id};
     });
 
-    session.og.add('session', {
-      id:session.id,
+    sessionModel = sessionCache.og.add('session', {
+      id:sessionCache.session.id,
       user:{id:canvasData.canvasUserID, name:canvasData.canvasUserName},
       course:{id:canvasData.canvasCourseID, name:canvasData.canvasCourseTitle},
       assignment:{id:canvasData.canvasAssignmentID, name:canvasData.canvasAssignmentTitle, courseID:canvasData.canvasCourseID},
@@ -57,11 +57,10 @@ function loadSession(sessionID, canvasData, cb) {
       });
       model.assignment.loadTasks(loadTasksForGroupID, function() {
         tasksLoaded=true;
-        doneLoading();
-      });
-      model.tasks.loadDiscussions(function() {
-        taskDiscussionsLoaded=true;
-        doneLoading();
+        model.assignment.tasks.loadDiscussions(function() {
+          taskDiscussionsLoaded=true;
+          doneLoading();
+        });
       });
       model.groups.loadDiscussions(function() {
         groupDiscussionsLoaded=true;
@@ -74,7 +73,7 @@ function loadSession(sessionID, canvasData, cb) {
   });
 
   function doneLoading() {
-    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded) cb();
+    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded) cb(null, sessionModel);
   }
 
 }
