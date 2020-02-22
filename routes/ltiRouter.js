@@ -29,9 +29,10 @@ router.post('/', function(req, res) {
 
 function loadSession(sessionID, canvasData, cb) {
   var sessionCache = sessions[sessionID], sessionModel;
-  var tasksLoaded = false, groupsLoaded = false, taskDiscussionsLoaded = false, groupDiscussionsLoaded = false;
+  var tasksLoaded = false, groupsLoaded = false, taskDiscussionsLoaded = false, groupDiscussionsLoaded = false, rubricLoaded = false;
 
-  canvas.getCourseGroup({id:canvasData.canvasCourseID}, {id:canvasData.canvasUserID}, function(err, result) {
+  var getAllGroups = (canvasData.roleID===1);
+  canvas.getCourseGroup({id:canvasData.canvasCourseID}, {id:canvasData.canvasUserID}, getAllGroups, function(err, result) {
     var groups = result.map(function(group) {
       return {id:group.id, name:group.name, courseID:group.course_id};
     });
@@ -44,36 +45,38 @@ function loadSession(sessionID, canvasData, cb) {
       role:canvasData.roleID,
       groups:groups
     }, function(model) {
-      var loadTasksForGroupID;
+      var onlyForGroupID;
       if (canvasData.roleID===1) { //Instructor
         //TODO anything different??
       }
       else if (canvasData.roleID===2) {
-        loadTasksForGroupID=model.groups.at(0).id;
+        onlyForGroupID=model.groups.at(0).id;
       }
       model.groups.loadMembers(function() {
         groupsLoaded=true;
         doneLoading();
       });
-      model.assignment.loadTasks(loadTasksForGroupID, function() {
+      model.assignment.loadTasks(onlyForGroupID, function() {
         tasksLoaded=true;
         model.assignment.tasks.loadDiscussions(function() {
           taskDiscussionsLoaded=true;
           doneLoading();
         });
       });
+      model.assignment.loadRubric(onlyForGroupID, function() {
+        rubricLoaded=true;
+        doneLoading();
+      });
       model.groups.loadDiscussions(function() {
         groupDiscussionsLoaded=true;
         doneLoading();
       });
 
-      //TODO load rubrics
-
     });
   });
 
   function doneLoading() {
-    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded) cb(null, sessionModel);
+    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded && rubricLoaded) cb(null, sessionModel);
   }
 
 }

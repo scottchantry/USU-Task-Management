@@ -210,6 +210,18 @@ function setModelMethods(schemas, og) {
             }
         });
     };
+    schemas.assignment.methods.loadRubric = function(groupID, cb) {
+        var model = this;
+        var query = "SELECT * FROM [Rubrics] WHERE canvasAssignmentID=@assignmentID";
+        var parameters = [{name:'assignmentID', dataType:db.dataTypes.Int, value:model.id}];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            if (rows.length===0) return cb();
+            var rubric = og.add('rubric', rows[0]);
+            model.rubric=rubric;
+            rubric.loadCriterion(groupID, cb);
+        });
+    };
     schemas.group.methods.loadMembers = function(cb) {
         var model = this;
         canvas.getGroupMembers(model, function(err, users) {
@@ -248,6 +260,40 @@ function setModelMethods(schemas, og) {
                 groupsLoaded++;
                 if (groupsLoaded===collection.length) cb();
             });
+        });
+    };
+    schemas.rubric.methods.loadCriterion = function(groupID, cb) {
+        var model = this;
+        var query = "SELECT * FROM [RubricCriterion] WHERE rubricID=@rubricID";
+        var parameters = [{name:'rubricID', dataType:db.dataTypes.Int, value:model.id}];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            var criterion = og.add('rubricCriteria', rows);
+            var criteriaLoaded=0;
+            if (criterion.length===0) doneLoading();
+            criterion.forEach(function(criteria){
+                criteria.loadRatings(groupID,function(err) {
+                    criteriaLoaded++;
+                    doneLoading();
+                });
+            });
+            function doneLoading() {
+                if (criteriaLoaded===criterion.length) cb();
+            }
+        });
+    };
+    schemas.rubricCriteria.methods.loadRatings = function(groupID, cb) {
+        var model = this;
+        var query = "SELECT * FROM [RubricRatings] WHERE rubricCriteriaID=@criteriaID";
+        var parameters = [{name:'criteriaID', dataType:db.dataTypes.Int, value:model.id}];
+        if (groupID) {
+            query+=" AND canvasGroupID=@groupID";
+            parameters.push({name:'groupID', dataType:db.dataTypes.Int, value:groupID});
+        }
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            og.add('rubricRating', rows);
+            cb();
         });
     };
     schemas.task.methods.loadTaskAssignments = function(cb) {

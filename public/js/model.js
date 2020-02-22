@@ -7,6 +7,7 @@ var model = {
             id:'long',
             name:'string',
             course:{type:"course", key:"courseID"},
+            rubric:{type:"rubric", key:'rubricID', cascadeSave:true},
             tasks:{plural:"tasks"}
         },
         plural:'assignments'
@@ -61,6 +62,37 @@ var model = {
         },
         plural:'groupMemberships'
     },*/
+    rubric: {
+        key:'id',
+        members: {
+            id:'long',
+            title:'string',
+            assignment:{type:'assignment', key:"canvasAssignmentID"},
+            criterion:{plural:"rubricCriterion", cascadeSave:true, cascadeDelete:true}
+        },
+        plural:'rubrics'
+    },
+    rubricCriteria: {
+        key:'id',
+        members: {
+            id:'long',
+            description:'string',
+            totalPoints:'long',
+            rubric:{type:'rubric', reciprocal:'criterion'},
+            ratings:{plural:"rubricRatings", cascadeSave:true, cascadeDelete:true}
+        },
+        plural:'rubricCriterion'
+    },
+    rubricRating: {
+        key:'id',
+        members: {
+            id:'long',
+            description:'string',
+            points:'long',
+            rubricCriteria:{type:'rubricCriteria', reciprocal:'ratings'}
+        },
+        plural:'rubricRatings'
+    },
     session: {
         key:'id',
         members: {

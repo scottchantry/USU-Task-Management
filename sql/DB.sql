@@ -40,8 +40,41 @@ CREATE TABLE [Discussions] (
     )
 );
 GO
---Rubrics
 
+--Rubrics
+CREATE TABLE [Rubrics] (
+    id INT IDENTITY(1,1) NOT NULL,
+    title NVARCHAR(255) NOT NULL,
+    canvasAssignmentID INT NOT NULL,
+    CONSTRAINT PK_Rubrics PRIMARY KEY CLUSTERED
+    (
+        id
+    )
+);
+GO
+CREATE TABLE [RubricCriterion] (
+    id INT IDENTITY(1,1) NOT NULL,
+    rubricID INT NOT NULL,
+    description NVARCHAR(4000) NOT NULL,
+    totalPoints DECIMAL(6,1) NOT NULL,
+    CONSTRAINT PK_RubricCriterion PRIMARY KEY CLUSTERED
+    (
+        id
+    )
+);
+GO
+CREATE TABLE [RubricRatings] (
+    id INT IDENTITY(1,1) NOT NULL,
+    rubricCriteriaID INT NOT NULL,
+    canvasGroupID INT,
+    description NVARCHAR(4000) NOT NULL,
+    points DECIMAL(6,1) NOT NULL,
+    CONSTRAINT PK_RubricRatings PRIMARY KEY CLUSTERED
+    (
+        id
+    )
+);
+GO
 
 
 
