@@ -23,7 +23,8 @@ CREATE TABLE [TaskAssignments] (
     CONSTRAINT PK_TaskAssignments PRIMARY KEY CLUSTERED
     (
         id
-    )
+    ),
+    CONSTRAINT FK_TaskAssignment_Task FOREIGN KEY (taskID) REFERENCES Tasks (id) ON DELETE CASCADE
 );
 GO
 
@@ -37,7 +38,8 @@ CREATE TABLE [Discussions] (
     CONSTRAINT PK_Discussions PRIMARY KEY CLUSTERED
     (
         id
-    )
+    ),
+    CONSTRAINT FK_Discussion_Task FOREIGN KEY (taskID) REFERENCES Tasks (id) ON DELETE CASCADE
 );
 GO
 
@@ -60,7 +62,8 @@ CREATE TABLE [RubricCriterion] (
     CONSTRAINT PK_RubricCriterion PRIMARY KEY CLUSTERED
     (
         id
-    )
+    ),
+    CONSTRAINT FK_Criteria_Rubric FOREIGN KEY (rubricID) REFERENCES Rubrics (id) ON DELETE CASCADE
 );
 GO
 CREATE TABLE [RubricRatings] (
@@ -72,7 +75,8 @@ CREATE TABLE [RubricRatings] (
     CONSTRAINT PK_RubricRatings PRIMARY KEY CLUSTERED
     (
         id
-    )
+    ),
+    CONSTRAINT FK_Ratings_Criteria FOREIGN KEY (rubricCriteriaID) REFERENCES RubricCriterion (id) ON DELETE CASCADE
 );
 GO
 

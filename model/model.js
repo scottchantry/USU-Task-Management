@@ -222,6 +222,29 @@ function setModelMethods(schemas, og) {
             rubric.loadCriterion(groupID, cb);
         });
     };
+    schemas.discussion.methods.save = function(cb) {
+        var model = this, query, parameters;
+        if (this.isNewUnsaved()) {
+            query = "INSERT INTO [Discussions] (text, canvasGroupID, taskID) "+
+                "VALUES (@text, @canvasGroupID, @taskID); "+
+                "select id, created FROM [Discussions] WHERE id=@@identity;";
+            parameters = [
+                {name:'text', dataType:db.dataTypes.Text, value:model.text},
+                {name:'canvasGroupID', dataType:db.dataTypes.Int, value:(model.group && model.group.id)},
+                {name:'taskID', dataType:db.dataTypes.Int, value:(model.task && model.task.id)}
+            ];
+        }
+        else {
+            //Can't change existing discussion
+            return cb();
+        }
+
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            model.applyUnsavedChanges(rows[0]);
+            cb();
+        });
+    };
     schemas.group.methods.loadMembers = function(cb) {
         var model = this;
         canvas.getGroupMembers(model, function(err, users) {
@@ -282,6 +305,38 @@ function setModelMethods(schemas, og) {
             }
         });
     };
+    schemas.rubric.methods.save = function(cb) {
+        var model = this, query, parameters;
+        if (model.deleted) {
+            query = "DELETE FROM [Rubrics] WHERE id=@key";
+        }
+        else if (this.isNewUnsaved()) {
+            query = "INSERT INTO [Rubrics] (title, canvasAssignmentID) "+
+                "VALUES (@title, @canvasAssignmentID); "+
+                "select @@identity as id;";
+        }
+        else {
+            query = "UPDATE [Rubrics] SET "+
+                "title=@title, canvasAssignmentID=@canvasAssignmentID "+
+                "WHERE id=@key";
+        }
+        parameters=[
+            {name:'key', dataType:db.dataTypes.Int, value:model.id},
+            {name:'title', dataType:db.dataTypes.NVarChar, value:model.title},
+            {name:'canvasAssignmentID', dataType:db.dataTypes.Int, value:(model.assignment && model.assignment.id)}
+        ];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            if (model.deleted) {
+                model.erase();
+                cb();
+            }
+            else {
+                model.applyUnsavedChanges(rows[0]);
+                model.criterion.save(cb);
+            }
+        });
+    };
     schemas.rubricCriteria.methods.loadRatings = function(groupID, cb) {
         var model = this;
         var query = "SELECT * FROM [RubricRatings] WHERE rubricCriteriaID=@criteriaID";
@@ -294,6 +349,74 @@ function setModelMethods(schemas, og) {
             if (err) cb(err);
             og.add('rubricRating', rows);
             cb();
+        });
+    };
+    schemas.rubricCriteria.methods.save = function(cb) {
+        var model = this, query, parameters;
+        if (model.isNewUnsaved()) {
+            query = "INSERT INTO [RubricCriterion] (rubricID, description, totalPoints) "+
+                "VALUES (@rubricID, @description, @totalPoints); "+
+                "select @@identity as id;";
+        }
+        else {
+            query = "UPDATE [RubricCriterion] SET "+
+                "rubricID=@rubricID, description=@description, totalPoints=@totalPoints "+
+                "WHERE id=@key";
+        }
+        parameters=[
+            {name:'key', dataType:db.dataTypes.Int, value:model.id},
+            {name:'rubricID', dataType:db.dataTypes.Int, value:model.rubric.id},
+            {name:'description', dataType:db.dataTypes.NVarChar, value:model.description},
+            {name:'totalPoints', dataType:db.dataTypes.Decimal, value:model.totalPoints}
+        ];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            model.applyUnsavedChanges(rows[0]);
+            model.ratings.save(cb);
+        });
+    };
+    schemas.rubricCriteria.collectionMethods.save = function(cb) {
+        var collection=this, criteriaSaved=0;
+        if (collection.length===0) return cb();
+        collection.forEach(function(criteria) {
+            criteria.save(function(err) {
+                criteriaSaved++;
+                if (criteriaSaved===collection.length) cb();
+            });
+        });
+    };
+    schemas.rubricRating.methods.save = function(cb) {
+        var model = this, query, parameters;
+        if (model.isNewUnsaved()) {
+            query = "INSERT INTO [RubricRatings] (rubricCriteriaID, canvasGroupID, description, points) "+
+                "VALUES (@rubricCriteriaID, @canvasGroupID, @description, @points); "+
+                "select @@identity as id;";
+        }
+        else {
+            query = "UPDATE [RubricRatings] SET "+
+                "rubricCriteriaID=@rubricCriteriaID, canvasGroupID=@canvasGroupID, description=@description, points=@points "+
+                "WHERE id=@key";
+        }
+        parameters=[
+            {name:'key', dataType:db.dataTypes.Int, value:model.id},
+            {name:'rubricCriteriaID', dataType:db.dataTypes.Int, value:model.rubricCriteria.id},
+            {name:'canvasGroupID', dataType:db.dataTypes.Int, value:(model.group && model.group.id)},
+            {name:'points', dataType:db.dataTypes.Decimal, value:model.points}
+        ];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            model.applyUnsavedChanges(rows[0]);
+            cb();
+        });
+    };
+    schemas.rubricRating.collectionMethods.save = function(cb) {
+        var collection=this, ratingSaved=0;
+        if (collection.length===0) return cb();
+        collection.forEach(function(rating) {
+            rating.save(function(err) {
+                ratingSaved++;
+                if (ratingSaved===collection.length) cb();
+            });
         });
     };
     schemas.task.methods.loadTaskAssignments = function(cb) {
@@ -316,6 +439,43 @@ function setModelMethods(schemas, og) {
             cb();
         });
     };
+    schemas.task.methods.save = function(cb) {
+        var model = this, query, parameters;
+        if (model.deleted) {
+            query = "DELETE FROM [Tasks] WHERE id=@key";
+        }
+        else if (this.isNewUnsaved()) {
+            query = "INSERT INTO [Tasks] (name, description, canvasAssignmentID, startDate, endDate, canvasGroupID, groupTask) "+
+                "VALUES (@name, @canvasAssignmentID, @startDate, @endDate, @canvasGroupID, @groupTask); "+
+                "select @@identity as id;";
+        }
+        else {
+            query = "UPDATE [Tasks] SET "+
+                "name=@name, description=@description, canvasAssignmentID=@canvasAssignmentID, startDate=@startDate, endDate=@endDate, canvasGroupID=@canvasGroupID, groupTask=@groupTask "+
+                "WHERE id=@key";
+        }
+        parameters=[
+            {name:'key', dataType:db.dataTypes.Int, value:model.id},
+            {name:'name', dataType:db.dataTypes.NVarChar, value:model.name},
+            {name:'description', dataType:db.dataTypes.NVarChar, value:model.description},
+            {name:'canvasAssignmentID', dataType:db.dataTypes.Int, value:(model.assignment && model.assignment.id)},
+            {name:'startDate', dataType:db.dataTypes.Date, value:model.startDate},
+            {name:'endDate', dataType:db.dataTypes.Date, value:model.endDate},
+            {name:'canvasGroupID', dataType:db.dataTypes.Int, value:(model.group && model.group.id)},
+            {name:'groupTask', dataType:db.dataTypes.Bit, value:model.groupTask}
+        ];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            if (model.deleted) {
+                model.erase();
+                cb();
+            }
+            else {
+                model.applyUnsavedChanges(rows[0]);
+                model.taskAssignments.save(cb);
+            }
+        });
+    };
     schemas.task.collectionMethods.loadDiscussions = function(cb) {
         var collection=this, tasksLoaded=0;
         if (collection.length===0) return cb();
@@ -323,6 +483,40 @@ function setModelMethods(schemas, og) {
             task.loadDiscussions(function(err) {
                 tasksLoaded++;
                 if (tasksLoaded===collection.length) cb();
+            });
+        });
+    };
+    schemas.taskAssignment.methods.save = function(cb) {
+        var model = this, query, parameters;
+        if (model.isNewUnsaved()) {
+            query = "INSERT INTO [TaskAssignments] (taskID, canvasUserID, status) "+
+                "VALUES (@taskID, @canvasUserID, @status); "+
+                "select @@identity as id;";
+        }
+        else {
+            query = "UPDATE [TaskAssignments] SET "+
+                "taskID=@taskID, canvasUserID=@canvasUserID, status=@status "+
+                "WHERE id=@key";
+        }
+        parameters=[
+            {name:'key', dataType:db.dataTypes.Int, value:model.id},
+            {name:'taskID', dataType:db.dataTypes.Int, value:(model.task && model.task.id)},
+            {name:'canvasUserID', dataType:db.dataTypes.Int, value:(model.user && model.user.id)},
+            {name:'status', dataType:db.dataTypes.TinyInt, value:model.status}
+        ];
+        db.executeSQL(query, parameters, function(err, rows) {
+            if (err) cb(err);
+            model.applyUnsavedChanges(rows[0]);
+            cb();
+        });
+    };
+    schemas.taskAssignment.collectionMethods.save = function(cb) {
+        var collection=this, assignmentSaved=0;
+        if (collection.length===0) return cb();
+        collection.forEach(function(assignment) {
+            assignment.save(function(err) {
+                assignmentSaved++;
+                if (assignmentSaved===collection.length) cb();
             });
         });
     };

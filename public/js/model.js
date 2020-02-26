@@ -89,6 +89,7 @@ var model = {
             id:'long',
             description:'string',
             points:'long',
+            group:{type:"group", key:"canvasGroupID"},
             rubricCriteria:{type:'rubricCriteria', reciprocal:'ratings'}
         },
         plural:'rubricRatings'
