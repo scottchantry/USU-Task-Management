@@ -36,8 +36,15 @@ module.exports = {
 	},
 	formatDate: function(date){
 		return ((date.getMonth()+1) < 10 ? '0' : '') + (date.getMonth()+1) + '/' + (date.getDate() < 10 ? '0' : '') + date.getDate() + '/' + date.getFullYear();
+	},
+	exception: function(err) {
+		return {
+			exception:{
+				message:err.message,
+				stack:err.stack
+			}
+		};
 	}
-
 };
 
 

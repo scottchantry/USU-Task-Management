@@ -505,43 +505,24 @@ function ObjectGraph() {
             return this;
         },
         save: function(done) {
-            var path='service/'+this.schema.type+'/';
-            var data={}, model=this, modelData;
+            var path='service/'+this.schema.type;
+            var data={}, model=this;
             if (model.deleted) {
                 if (model.isNewUnsaved()) {
                     model.erase();
                     return done && done();
                 }
                 else {
-                    path += 'delete';
                     var modelObject = {};
                     if (model.id) modelObject = {id:model.id};
                     else modelObject[model.schema.key] = model[model.schema.key];
-                    data[model.schema.plural] = [modelData=modelObject];
-                    if (model.lastModified && model.lastModified.getTime){
-                        modelData.lastModified = model.lastModified.getTime();
-                    }
-                    Object.keys(model.schema.members).forEach(function(memberName) {
-                        if (model.schema.members[memberName].cascadeLastModified) {
-                            var memberData={}, memberModel=model[memberName];
-                            var member = model.schema.members[memberName];
-                            var plural = og[member.type].plural;
-                            if (memberModel) {
-                                data[plural] = data[plural] || [];
-                                memberData[og[member.type].key] = memberModel[og[member.type].key];
-                                memberData.lastModified = memberModel.lastModified.getTime();
-                                modelData[member.key] = memberModel[og[member.type].key];
-                                data[plural].push(memberData);
-                            }
-                        }
-                    });
+                    modelObject.deleted=true;
+                    data[model.schema.plural] = [modelObject];
                     data = JSON.stringify(data);
                 }
             }
             else {
-                path += 'save';
-                if (this.schema.shallowSave) data = this.serializeShallow();
-                else if (this.schema.fullSave || this.isNewUnsaved()) data = this.serialize();
+                if (this.schema.fullSave || this.isNewUnsaved()) data = this.serialize();
                 else data[this.schema.plural] = [this.unsavedChanges()];
                 data = JSON.stringify(data);
             }

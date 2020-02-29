@@ -126,64 +126,19 @@ function setModelMethods(schemas, og) {
                     });
                 }
             }
-
-
-            /*Object.keys(this._data).forEach(function(key) {
-                var member = this.schema.members[key];
-                if (!member) return;
-                var candidate = this.get(key);
-                if (og.isCollection(candidate)) {
-                    //TODO need way of knowing if something needs to be deleted (mark as deleted somehow??) Only if parent is unsaved
-                    if (member.cascadeSave) saveChild(candidate, key);
-                }
-                else if (member.type) {
-                    if (member.cascadeSave) {
-                        if (og.isModel(candidate)) saveChild(candidate, key);
-                    }
-                    else if (member.key) {
-                        // include the key unless it refers to the parent that called serialize on this model
-                        if (candidate !== parent) {
-                            if (og.isModel(candidate)) saveChild(candidate, key);
-                        }
-                    }
-                }
-            }.bind(this));*/
-
-            /*function saveChild(candidate, key) {
-                childObjectsBeingSaved++;
-                candidate.save(function() {
-                   childObjectsBeingSaved--;
-                   model[key] = candidate;
-                   readyToSave();
-                });
-            }
-            function readyToSave() {
-                var query, parameters;
-                var membersArray=model.membersArray(), valuesArray=model.valuesArray();
-                if (childObjectsBeingSaved===0) {
-                    if (model.isNewUnsaved()) {
-                        //TODO need to account for SQL injection
-                        query = "INSERT INTO ["+schema.plural+"] ("+membersArray.join(',')+") VALUES ("+valuesArray.join(',')+")";
-                    }
-                    else {
-                        query = "UPDATE ["+schema.plural+"] SET ";
-                        var memberValuePairs=[];
-                        membersArray.forEach(function(member, index) {
-                           memberValuePairs.push(member+"="+valuesArray[index]);
-                        });
-                        query+=memberValuePairs.join(',')+" WHERE "+schema.key+"=@key";
-                        parameters = [{name:'key', dataType:db.dataTypes.Int, value:model.get(schema.key)}];
-                    }
-                    db.executeSQL(query, parameters, function(err, rows) {
-                        if (err) cb(err);
-                        model.applyUnsavedChanges(rows[0]);
-                        cb();
-                    });
-                }
-            }*/
         };
         schema.collectionMethods.load=function(){};
-        schema.collectionMethods.save=function(){};
+        schema.collectionMethods.save=function(cb){
+            var collection=this, modelsSaved=0, error;
+            if (collection.length===0) return cb();
+            collection.forEach(function(model) {
+                model.save(function(err) {
+                    if (err) error=err;
+                    modelsSaved++;
+                    if (modelsSaved===collection.length) cb(error);
+                });
+            });
+        };
     });
 
     schemas.assignment.methods.loadTasks = function(groupID, cb) {
@@ -266,22 +221,24 @@ function setModelMethods(schemas, og) {
         });
     };
     schemas.group.collectionMethods.loadMembers = function(cb) {
-        var collection=this, groupsLoaded=0;
+        var collection=this, groupsLoaded=0, error;
         if (collection.length===0) return cb();
         collection.forEach(function(group) {
             group.loadMembers(function(err) {
+                if (err) error=err;
                 groupsLoaded++;
-                if (groupsLoaded===collection.length) cb();
+                if (groupsLoaded===collection.length) cb(error);
             });
         });
     };
     schemas.group.collectionMethods.loadDiscussions = function(cb) {
-        var collection=this, groupsLoaded=0;
+        var collection=this, groupsLoaded=0, error;
         if (collection.length===0) return cb();
         collection.forEach(function(group) {
             group.loadDiscussions(function(err) {
+                if (err) error=err;
                 groupsLoaded++;
-                if (groupsLoaded===collection.length) cb();
+                if (groupsLoaded===collection.length) cb(error);
             });
         });
     };
@@ -307,7 +264,7 @@ function setModelMethods(schemas, og) {
     };
     schemas.rubric.methods.save = function(cb) {
         var model = this, query, parameters;
-        if (model.deleted) {
+        if (model.get("deleted")) {
             query = "DELETE FROM [Rubrics] WHERE id=@key";
         }
         else if (this.isNewUnsaved()) {
@@ -327,7 +284,7 @@ function setModelMethods(schemas, og) {
         ];
         db.executeSQL(query, parameters, function(err, rows) {
             if (err) cb(err);
-            if (model.deleted) {
+            if (model.get("deleted")) {
                 model.erase();
                 cb();
             }
@@ -353,7 +310,10 @@ function setModelMethods(schemas, og) {
     };
     schemas.rubricCriteria.methods.save = function(cb) {
         var model = this, query, parameters;
-        if (model.isNewUnsaved()) {
+        if (model.get("deleted")) {
+            query = "DELETE FROM [RubricCriterion] WHERE id=@key";
+        }
+        else if (model.isNewUnsaved()) {
             query = "INSERT INTO [RubricCriterion] (rubricID, description, totalPoints) "+
                 "VALUES (@rubricID, @description, @totalPoints); "+
                 "select @@identity as id;";
@@ -371,17 +331,24 @@ function setModelMethods(schemas, og) {
         ];
         db.executeSQL(query, parameters, function(err, rows) {
             if (err) cb(err);
-            model.applyUnsavedChanges(rows[0]);
-            model.ratings.save(cb);
+            if (model.get("deleted")) {
+                model.erase();
+                cb();
+            }
+            else {
+                model.applyUnsavedChanges(rows[0]);
+                model.ratings.save(cb);
+            }
         });
     };
     schemas.rubricCriteria.collectionMethods.save = function(cb) {
-        var collection=this, criteriaSaved=0;
+        var collection=this, criteriaSaved=0, error;
         if (collection.length===0) return cb();
         collection.forEach(function(criteria) {
             criteria.save(function(err) {
+                if (err) error=err;
                 criteriaSaved++;
-                if (criteriaSaved===collection.length) cb();
+                if (criteriaSaved===collection.length) cb(error);
             });
         });
     };
@@ -410,12 +377,13 @@ function setModelMethods(schemas, og) {
         });
     };
     schemas.rubricRating.collectionMethods.save = function(cb) {
-        var collection=this, ratingSaved=0;
+        var collection=this, ratingSaved=0, error;
         if (collection.length===0) return cb();
         collection.forEach(function(rating) {
             rating.save(function(err) {
+                if (err) error=err;
                 ratingSaved++;
-                if (ratingSaved===collection.length) cb();
+                if (ratingSaved===collection.length) cb(error);
             });
         });
     };
@@ -441,12 +409,12 @@ function setModelMethods(schemas, og) {
     };
     schemas.task.methods.save = function(cb) {
         var model = this, query, parameters;
-        if (model.deleted) {
+        if (model.get("deleted")) {
             query = "DELETE FROM [Tasks] WHERE id=@key";
         }
         else if (this.isNewUnsaved()) {
             query = "INSERT INTO [Tasks] (name, description, canvasAssignmentID, startDate, endDate, canvasGroupID, groupTask) "+
-                "VALUES (@name, @canvasAssignmentID, @startDate, @endDate, @canvasGroupID, @groupTask); "+
+                "VALUES (@name, @description, @canvasAssignmentID, @startDate, @endDate, @canvasGroupID, @groupTask); "+
                 "select @@identity as id;";
         }
         else {
@@ -466,7 +434,7 @@ function setModelMethods(schemas, og) {
         ];
         db.executeSQL(query, parameters, function(err, rows) {
             if (err) cb(err);
-            if (model.deleted) {
+            if (model.get("deleted")) {
                 model.erase();
                 cb();
             }
@@ -477,12 +445,13 @@ function setModelMethods(schemas, og) {
         });
     };
     schemas.task.collectionMethods.loadDiscussions = function(cb) {
-        var collection=this, tasksLoaded=0;
+        var collection=this, tasksLoaded=0, error;
         if (collection.length===0) return cb();
         collection.forEach(function(task) {
             task.loadDiscussions(function(err) {
+                if (err) error=err;
                 tasksLoaded++;
-                if (tasksLoaded===collection.length) cb();
+                if (tasksLoaded===collection.length) cb(error);
             });
         });
     };
@@ -511,12 +480,13 @@ function setModelMethods(schemas, og) {
         });
     };
     schemas.taskAssignment.collectionMethods.save = function(cb) {
-        var collection=this, assignmentSaved=0;
+        var collection=this, assignmentSaved=0, error;
         if (collection.length===0) return cb();
         collection.forEach(function(assignment) {
             assignment.save(function(err) {
+                if (err) error=err;
                 assignmentSaved++;
-                if (assignmentSaved===collection.length) cb();
+                if (assignmentSaved===collection.length) cb(error);
             });
         });
     };

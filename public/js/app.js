@@ -1,4 +1,5 @@
 var og, session, running=false;
+var ajaxPath='/app/';
 
 $(function() {
     og = new ObjectGraph({});
