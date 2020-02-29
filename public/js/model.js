@@ -102,8 +102,7 @@ var model = {
             user:{type:"user", key:"userID", cascadeSave:true},
             course:{type:"course", key:"courseID", cascadeSave:true},
             assignment:{type:"assignment", key:"assignmentID", cascadeSave:true},
-            groups:{plural:"groups", cascadeSave:true},
-            role:'long'
+            groups:{plural:"groups", cascadeSave:true}
         },
         plural:'sessions'
     },
@@ -138,6 +137,7 @@ var model = {
         members: {
             id:'long',
             name:'string',
+            role:'long',
             group:{type:"group", key:"groupID", reciprocal:"members"}
         },
         plural:'users'

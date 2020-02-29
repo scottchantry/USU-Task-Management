@@ -29,7 +29,7 @@ router.post('/', function(req, res) {
 
 function loadSession(sessionID, canvasData, cb) {
   var sessionCache = sessions[sessionID], sessionModel;
-  var tasksLoaded = false, groupsLoaded = false, taskDiscussionsLoaded = false, groupDiscussionsLoaded = false, rubricLoaded = false;
+  var tasksLoaded=false, groupsLoaded=false, taskDiscussionsLoaded=false, groupDiscussionsLoaded=false, rubricLoaded=false, instructorLoaded=false;
 
   var getAllGroups = (canvasData.roleID===1);
   canvas.getCourseGroup({id:canvasData.canvasCourseID}, {id:canvasData.canvasUserID}, getAllGroups, function(err, result) {
@@ -39,18 +39,22 @@ function loadSession(sessionID, canvasData, cb) {
 
     sessionModel = sessionCache.og.add('session', {
       id:sessionCache.session.id,
-      user:{id:canvasData.canvasUserID, name:canvasData.canvasUserName},
+      user:{id:canvasData.canvasUserID, name:canvasData.canvasUserName, role:canvasData.roleID},
       course:{id:canvasData.canvasCourseID, name:canvasData.canvasCourseTitle},
       assignment:{id:canvasData.canvasAssignmentID, name:canvasData.canvasAssignmentTitle, courseID:canvasData.canvasCourseID},
-      role:canvasData.roleID,
       groups:groups
     }, function(model) {
       var onlyForGroupID;
       if (canvasData.roleID===1) { //Instructor
         //TODO anything different??
+        instructorLoaded=true;
       }
       else if (canvasData.roleID===2) {
         onlyForGroupID=model.groups.at(0).id;
+        model.groups.at(0).loadInstructor(function() {
+          instructorLoaded=true;
+          doneLoading();
+        });
       }
       model.groups.loadMembers(function() {
         groupsLoaded=true;
@@ -76,7 +80,7 @@ function loadSession(sessionID, canvasData, cb) {
   });
 
   function doneLoading() {
-    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded && rubricLoaded) cb(null, sessionModel);
+    if (tasksLoaded && groupsLoaded && taskDiscussionsLoaded && groupDiscussionsLoaded && rubricLoaded && instructorLoaded) cb(null, sessionModel);
   }
 
 }

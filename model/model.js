@@ -205,8 +205,16 @@ function setModelMethods(schemas, og) {
         canvas.getGroupMembers(model, function(err, users) {
             if (err) cb(err);
             users.forEach(function(user) {
-                og.add('user', {id:user.id, name:user.name, groupID:model.id});
+                og.add('user', {id:user.id, name:user.name, role:2, groupID:model.id});
             });
+            cb();
+        });
+    };
+    schemas.group.methods.loadInstructor = function(cb) {
+        var model = this;
+        canvas.getInstructor(model.course, function(err, instructor) {
+            if (err) cb(err);
+            og.add('user', {id:instructor.id, name:instructor.name, role:1, groupID:model.id});
             cb();
         });
     };
