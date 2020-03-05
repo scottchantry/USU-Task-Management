@@ -1013,7 +1013,6 @@ function getBeforeSend() {
         }
     };
 }
-
 function handleError(done) {
     return function(jqXHR) {
         if (jqXHR.responseText && jqXHR.responseText.length) {
@@ -1028,7 +1027,6 @@ function handleError(done) {
         else if (done) done(Error("The response from the server was empty, or there was an error on the server. You may have to refresh/reload this page to restore functionality."));
     }
 }
-
 function getURLParams() {
     var params={};
     var searchParams=window.location.search.split(/[?=&]/);
@@ -1037,6 +1035,127 @@ function getURLParams() {
         params[searchParams[i]] = isNaN(value) ? String(searchParams[i + 1]) : value;
     }
     return params;
+}
+jQuery.fn.extend({
+    model: function(model, field, saved, placeholder, afterProcess) {
+        if (!model) {
+            console.error("No model was provided for binding.");
+            return this;
+        }
+        return this.each(function(index, element) {
+            var nodeName = element.nodeName, val;
+            var key = saved?'saved':field;
+            var $element = jQuery(element);
+            if (nodeName === 'INPUT' || nodeName === 'TEXTAREA' || $element.prop('contenteditable')==='true') {
+                // two-way binding
+                if (og.isModel(model)) {
+                    model.subscribe(key, function() {
+                        //if (document.activeElement!==element) {
+                        if ($element.attr('type') === 'checkbox') $element.prop('checked', !!model.get(field));
+                        else if ($element.prop('contenteditable') === 'true') $element.text(model.get(field));
+                        else $element.val(model.get(field));
+                        //}
+                    });
+                    setImmediate(function(){
+                        if ($element.prop('contenteditable')==='true') $element.on('input', function() {
+                            model.set(field, $element.text());
+                        });
+                        else $element.on('input', function() {
+                            model.set(field, $element.val());
+                        });
+                    });
+                }
+                else {
+                    // it's NOT a model, rig a one-way binding
+                    if ($element.attr('type')==='checkbox') {
+                        $element.prop('checked', !!model[field]);
+                        $element.click(function() {
+                            model[field] = $element[0].checked;
+                        });
+                    }
+                    else {
+                        $element.val(model[field]);
+                        $element.change(function() {
+                            model[field] = $element.val();
+                        });
+                        if (placeholder) $element.attr('placeholder', placeholder);
+                    }
+                }
+            }
+            else if (nodeName === 'SPAN' || nodeName === 'DIV' || nodeName === 'TD') {
+                // one-way dynamic binding
+                placeholder = placeholder || '';
+                if (og.isModel(model)) {
+                    $element.text(field?((val=model.get(field)) || (val!==undefined&&val!==null?val:placeholder)):model);
+                    if (afterProcess) afterProcess(model, $element);
+                    model.subscribe(key, true, function() {
+                        $element.text(field?((val=model.get(field)) || (val!==undefined&&val!==null?val:placeholder)):model);
+                        if (afterProcess) afterProcess(model, $element);
+                    });
+                }
+                // if not a model, one-way static (no binding)
+                else $element.text(field?model[field]:model);
+            }
+            else console.warn('As yet unsupported tag for model binding.');
+        });
+    },
+    focusAfter: function() {
+        return this.each(function(index, element) {
+            setTimeout(function() {jQuery(element).focus()}, 100);
+        });
+    }
+});
+function Element(tagName, attrs) {
+    // generate jQuery-wrapped DOM without incurring the regex cost in the jQuery constructor
+    var attr, val;
+    var svgTagNames = ['svg','g','polygon','rect','circle','path','line','text','radialGradient','linearGradient','stop','filter','feGaussianBlur','feOffset','feMerge','feMergeNode','feColorMatrix','feComponentTransfer','feFuncA','feFlood','feComposite'];
+    var element = svgTagNames.indexOf(tagName) !== -1 ? document.createElementNS('http://www.w3.org/2000/svg', tagName) : (tagName ? document.createElement(String(tagName)) : document.createDocumentFragment());
+    if (tagName==='svg' && (!attrs || !attrs.focusable)) element.setAttribute('focusable', false);//by default mark svg as non-focusable
+    if (attrs) {
+        for (attr in attrs) {
+            if (Object.prototype.hasOwnProperty.call(attrs, attr)) {
+                val = attrs[attr];
+                if (attr === 'text') {
+                    if (val !== null) element.appendChild(document.createTextNode(val));
+                }
+                else if (attr === 'children') {
+                    if (val !== null) val.forEach(append);
+                }
+                else if (attr === 'html') element.innerHTML = val;
+                else element.setAttribute(attr, val);
+            }
+        }
+    }
+    function append(child) {element.appendChild(child)}
+    var jQElement = $(element);
+    var nodeName = element.nodeName;
+    if ((nodeName==='SPAN' || nodeName==='DIV') && jQElement.prop('contenteditable')==="true" && element.hasAttribute('maxLength')) {
+        jQElement.on("keypress", function() {
+            return this.innerHTML.length < this.getAttribute("maxLength");
+        }).on("paste", function(e) {
+            e.preventDefault();//Insert as plain text
+            var limit = this.getAttribute("maxLength"), len = this.innerHTML.length, cp;
+            if ((e.originalEvent || e).clipboardData || window.clipboardData) {
+                cp = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('text');
+            }
+            if (cp && cp!=='' && len<=limit) {
+                var text = cp.substring(0, limit - len);
+                if (text && text!=='') {
+                    if (document.queryCommandSupported('insertText')) {
+                        document.execCommand('insertText', false, text);
+                    }
+                    else if (document.getSelection()) {
+                        document.getSelection().getRangeAt(0).insertNode(document.createTextNode(text));
+                    }
+                    else if (document.selection) {
+                        document.selection.createRange().pasteHTML(text);
+                    }
+                }
+            }
+            return false;
+        });
+    }
+    return jQElement;
 }
 
 if (typeof exports !== 'undefined') exports.ObjectGraph=ObjectGraph;
