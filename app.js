@@ -9,7 +9,7 @@ var ObjectGraph=require('./public/js/lib').ObjectGraph;
 var sessionInitializer = function(req, res, next) {
 	var sessionID = req.session.id, sessionTimeout;
 	if (!sessions[sessionID]) {
-		if (req.url.indexOf('/app')===0) { //Session required for /app path
+		if (false && req.url.indexOf('/app')===0) { //Session required for /app path
 			if (req.headers.accept && req.headers.accept.indexOf('application/json')>=0) return res.json({exception:{message:"Session has expired, please log in again."}});
 			else return res.send("Your session has expired or hasn't been created yet. Please log in through Canvas.");
 		}
