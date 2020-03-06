@@ -48,7 +48,7 @@ var model = {
             name:'string',
             course:{type:"course", key:"courseID"},
             members:{plural:"users", cascadeSave:true},
-            tasks:{plural:"tasks"},
+            tasks:{plural:"tasks", cascadeSave:true},
             discussions:{plural:"discussions", cascadeSave:true}
         },
         plural:'groups'
@@ -81,7 +81,8 @@ var model = {
             rubric:{type:'rubric', reciprocal:'criterion'},
             ratings:{plural:"rubricRatings", cascadeSave:true, cascadeDelete:true}
         },
-        plural:'rubricCriterion'
+        plural:'rubricCriterion',
+        bubbleEvents:{to:"rubric"}
     },
     rubricRating: {
         key:'id',
@@ -92,7 +93,8 @@ var model = {
             group:{type:"group", key:"canvasGroupID"},
             rubricCriteria:{type:'rubricCriteria', reciprocal:'ratings'}
         },
-        plural:'rubricRatings'
+        plural:'rubricRatings',
+        bubbleEvents:{to:"rubricCriteria"}
     },
     session: {
         key:'id',
@@ -120,6 +122,14 @@ var model = {
             taskAssignments:{plural:"taskAssignments", cascadeSave:true, cascadeDelete:true},
             discussions:{plural:"discussions", cascadeSave:true, cascadeDelete:true}
         },
+        methods:{
+            formatStartDate:function() {
+                return this.startDate.format();
+            },
+            formatEndDate:function() {
+                return this.endDate.format();
+            }
+        },
         plural:'tasks'
     },
     taskAssignment:{
@@ -130,7 +140,8 @@ var model = {
             user:{type:"user", key:"canvasUserID"},
             status:"long"
         },
-        plural:'taskAssignments'
+        plural:'taskAssignments',
+        bubbleEvents:{to:"task"}
     },
     user: {
         key:'id',
