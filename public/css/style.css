@@ -8,3 +8,8 @@
 	margin: 20px;
 }
 
+tr.taskRow ~ tr.assignmentRow {display:none}
+
+.ui.table>thead>tr>th.delete, .ui.table>tbody>tr>td.delete {width:80px;text-align:center}
+td.delete>i {opacity: 0.5}
+td.delete>i:hover {opacity: 1}

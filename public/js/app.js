@@ -56,7 +56,7 @@ function renderApp() {
 		var tasksBody, theGroup = og.groups.at(0);
 		var tasksElement = Element('div', {class: 'ui raised segment'}).append(
 			Element('div').text('All Tasks'),
-			Element('table', {class: 'ui striped selectable single line table'}).append(
+			Element('table', {class: 'ui selectable single line table'}).append(
 				Element('thead').append(
 					Element('tr').append(
 						Element('th').text(''),
@@ -64,7 +64,7 @@ function renderApp() {
 						Element('th').text('Status'),
 						Element('th').text('Start Date'),
 						Element('th').text('End Date'),
-						Element('th').text('Delete')
+						Element('th', {class: 'delete'}).text('Delete')
 					)
 				),
 				tasksBody = Element('tbody')
@@ -77,7 +77,7 @@ function renderApp() {
 		function renderTaskRow(task) {
 			var taskRow, statusElement, startDateElement, endDateElement;
 
-			taskRow = Element('tr').append(
+			taskRow = Element('tr', {class: 'taskRow'}).append(
 				Element('td', {class: 'collapsing'}).append(
 					Element('i', {class: 'caret right icon'}).click(expander)
 				),
@@ -85,8 +85,10 @@ function renderApp() {
 				statusElement = Element('td', {class: 'collapsing'}),
 				startDateElement = Element('td', {class: 'collapsing'}),
 				endDateElement = Element('td', {class: 'collapsing'}),
-				Element('td', {class: 'collapsing'}).append(
-					Element('i', {class: 'trash alternate icon'}).click(function() {
+				Element('td', {class: 'collapsing delete'}).append(
+					Element('i', {class: 'trash alternate icon'}).click(function(e) {
+						e.stopPropagation();
+						alert('delete click')
 						//TODO show modal to confirm
 						//task.erase();
 					})
@@ -112,15 +114,61 @@ function renderApp() {
 				taskRow.remove()
 			});
 			taskRow.click(function() {
-				//TODO go to task screen
+				//TODO go to task screen OR SHOULD WE REQUIRE CLICKING ON THE TASK NAME
+				alert('row click')
 			});
 			tasksBody.append(taskRow);
 
-			function expander() {
+			task.taskAssignments.forEach(addAssignmentRow);
+			task.taskAssignments.subscribe('add', true, function(key, value){addAssignmentRow(value)});
+
+			function expander(e) {
+				e.stopPropagation();
 				var elem = $(this);
-				//TODO
+				var collapsed = elem.hasClass('right');
+				if (collapsed) {
+					elem.removeClass('right').addClass('down');
+					showAssignments(true);
+				}
+				else {
+					elem.removeClass('down').addClass('right');
+					showAssignments(false);
+				}
+				function showAssignments(show) {
+					var assignmentRow=taskRow.next();
+					while (assignmentRow.hasClass('assignmentRow')) {
+						show ? assignmentRow.show() : assignmentRow.hide()
+						assignmentRow=assignmentRow.next();
+					}
+				}
+			}
+			function addAssignmentRow(assignment) {
+				var assignmentRow, assignmentStatusElement;
+				assignmentRow=Element('tr', {class: 'assignmentRow'}).append(
+					Element('td', {class: 'collapsing'}),
+					Element('td').model(assignment.user, 'name'), //TODO change to drop down
+					assignmentStatusElement = Element('td', {class: 'collapsing'}),
+					Element('td', {class: 'collapsing'}),
+					Element('td', {class: 'collapsing'}),
+					Element('td', {class: 'collapsing delete'}).append(
+						Element('i', {class: 'trash alternate icon'}).click(function(e) {
+							e.stopPropagation();
+							alert('delete click')
+							//TODO show modal to confirm
+							//assignment.erase();
+						})
+					)
+				);
+
+				var insertAfter = taskRow;
+				while (insertAfter.next().hasClass('assignmentRow')) {
+					insertAfter=insertAfter.next();
+				}
+				insertAfter.after(assignmentRow);
+				assignment.subscribe('deleted', true, function(){assignmentRow.remove()});
 			}
 		}
+
 	}
 
 	function renderDiscussionsScreen(link) {
