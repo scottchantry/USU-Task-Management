@@ -11,11 +11,13 @@
     "ejs": "~3.0.1",
     "express": "~4.16.1",
     "express-session": "~1.17.0",
+    "fomantic-ui": "^2.8.4",
     "jquery": "^3.4.1",
     "jsdom": "^16.1.0",
     "morgan": "~1.9.1",
     "oauth-1.0a": "~2.2.6",
     "request": "~2.x",
+    "semantic-ui-calendar": "0.0.8",
     "tedious": "~8.x",
     "tedious-connection-pool": "~1.x"
   }

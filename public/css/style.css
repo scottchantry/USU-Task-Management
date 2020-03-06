@@ -1,11 +1,10 @@
 
-
 .screenContainer {
-  top:59px;
-  bottom:0;
-  right:0;
-  left:0;
-  position:absolute;
-  margin:20px;
+	top: 59px;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	position: absolute;
+	margin: 20px;
 }
 

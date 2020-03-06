@@ -1,4 +1,4 @@
-(function (global, undefined) {
+(function(global, undefined) {
 	"use strict";
 
 	/*if (global.setImmediate) {
@@ -22,7 +22,7 @@
 			args[i] = arguments[i + 1];
 		}
 		// Store and register the task
-		var task = { callback: callback, args: args };
+		var task = {callback: callback, args: args};
 		tasksByHandle[nextHandle] = task;
 		registerImmediate(nextHandle);
 		return nextHandle++;
@@ -61,13 +61,15 @@
 			// Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
 			// "too much recursion" error.
 			setTimeout(runIfPresent, 0, handle);
-		} else {
+		}
+		else {
 			var task = tasksByHandle[handle];
 			if (task) {
 				currentlyRunningATask = true;
 				try {
 					run(task);
-				} finally {
+				}
+				finally {
 					clearImmediate(handle);
 					currentlyRunningATask = false;
 				}
@@ -77,7 +79,7 @@
 
 	function installNextTickImplementation() {
 		registerImmediate = function(handle) {
-			process.nextTick(function () { runIfPresent(handle); });
+			process.nextTick(function() { runIfPresent(handle); });
 		};
 	}
 
@@ -112,7 +114,8 @@
 
 		if (global.addEventListener) {
 			global.addEventListener("message", onGlobalMessage, false);
-		} else {
+		}
+		else {
 			global.attachEvent("onmessage", onGlobalMessage);
 		}
 
@@ -139,7 +142,7 @@
 			// Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
 			// into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
 			var script = doc.createElement("script");
-			script.onreadystatechange = function () {
+			script.onreadystatechange = function() {
 				runIfPresent(handle);
 				script.onreadystatechange = null;
 				html.removeChild(script);
@@ -164,19 +167,23 @@
 		// For Node.js before 0.9
 		installNextTickImplementation();
 
-	} else if (canUsePostMessage()) {
+	}
+	else if (canUsePostMessage()) {
 		// For non-IE10 modern browsers
 		installPostMessageImplementation();
 
-	} else if (global.MessageChannel) {
+	}
+	else if (global.MessageChannel) {
 		// For web workers, where supported
 		installMessageChannelImplementation();
 
-	} else if (doc && "onreadystatechange" in doc.createElement("script")) {
+	}
+	else if (doc && "onreadystatechange" in doc.createElement("script")) {
 		// For IE 6–8
 		installReadyStateChangeImplementation();
 
-	} else {
+	}
+	else {
 		// For older browsers
 		installSetTimeoutImplementation();
 	}

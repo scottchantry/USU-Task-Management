@@ -79,7 +79,7 @@ function renderApp() {
 
 			taskRow = Element('tr').append(
 				Element('td', {class: 'collapsing'}).append(
-					Element('i', {class:'caret right icon'}).click(expander)
+					Element('i', {class: 'caret right icon'}).click(expander)
 				),
 				Element('td').model(task, 'name'),
 				statusElement = Element('td', {class: 'collapsing'}),
@@ -102,8 +102,8 @@ function renderApp() {
 			task.subscribe('taskAssignments', function() {
 				var inProgress = 0, completed = 0;
 				task.taskAssignments.forEach(function(assignment) {
-					if (assignment.status===2) inProgress++;
-					else if (assignment.status===3) completed++;
+					if (assignment.status === 2) inProgress++;
+					else if (assignment.status === 3) completed++;
 				});
 				//TODO set status buttons
 				statusElement.text('status')
@@ -115,6 +115,7 @@ function renderApp() {
 				//TODO go to task screen
 			});
 			tasksBody.append(taskRow);
+
 			function expander() {
 				var elem = $(this);
 				//TODO
@@ -229,14 +230,16 @@ jQuery.fn.extend({
 							model.set(field, $element.val());
 						});
 					});
-				} else {
+				}
+				else {
 					// it's NOT a model, rig a one-way binding
 					if ($element.attr('type') === 'checkbox') {
 						$element.prop('checked', !!model[field]);
 						$element.click(function() {
 							model[field] = $element[0].checked;
 						});
-					} else {
+					}
+					else {
 						$element.val(model[field]);
 						$element.change(function() {
 							model[field] = $element.val();
@@ -244,7 +247,8 @@ jQuery.fn.extend({
 						if (placeholder) $element.attr('placeholder', placeholder);
 					}
 				}
-			} else if (nodeName === 'SPAN' || nodeName === 'DIV' || nodeName === 'TD') {
+			}
+			else if (nodeName === 'SPAN' || nodeName === 'DIV' || nodeName === 'TD') {
 				// one-way dynamic binding
 				placeholder = placeholder || '';
 				if (og.isModel(model)) {
@@ -257,7 +261,8 @@ jQuery.fn.extend({
 				}
 				// if not a model, one-way static (no binding)
 				else $element.text(field ? model[field] : model);
-			} else console.warn('As yet unsupported tag for model binding.');
+			}
+			else console.warn('As yet unsupported tag for model binding.');
 		});
 	},
 	focusAfter: function() {
@@ -281,9 +286,11 @@ function Element(tagName, attrs) {
 				val = attrs[attr];
 				if (attr === 'text') {
 					if (val !== null) element.appendChild(document.createTextNode(val));
-				} else if (attr === 'children') {
+				}
+				else if (attr === 'children') {
 					if (val !== null) val.forEach(append);
-				} else if (attr === 'html') element.innerHTML = val;
+				}
+				else if (attr === 'html') element.innerHTML = val;
 				else element.setAttribute(attr, val);
 			}
 		}
@@ -309,9 +316,11 @@ function Element(tagName, attrs) {
 				if (text && text !== '') {
 					if (document.queryCommandSupported('insertText')) {
 						document.execCommand('insertText', false, text);
-					} else if (document.getSelection()) {
+					}
+					else if (document.getSelection()) {
 						document.getSelection().getRangeAt(0).insertNode(document.createTextNode(text));
-					} else if (document.selection) {
+					}
+					else if (document.selection) {
 						document.selection.createRange().pasteHTML(text);
 					}
 				}
