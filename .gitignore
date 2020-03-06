@@ -5,7 +5,7 @@
 #!/.idea/runConfigurations/bin_www.xml
 #### General file and directory exclusions
 *.iws
-*.iml
+#*.iml
 *.ipr
 #/.idea/*.xml
 
