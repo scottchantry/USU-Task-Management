@@ -1,8 +1,10 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+
+
+.screenContainer {
+  top:59px;
+  bottom:0;
+  right:0;
+  left:0;
+  position:absolute;
 }
 
-a {
-  color: #00B7FF;
-}
