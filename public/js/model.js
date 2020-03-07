@@ -36,6 +36,7 @@ var model = {
 			id: 'long',
 			created: 'date',
 			text: 'string',
+			user: {type: 'user', key:'canvasUserID'},
 			group: {type: 'group', key: 'canvasGroupID', reciprocal: 'discussions'},
 			task: {type: 'task', key: 'taskID', reciprocal: 'discussions'}
 		},

@@ -409,8 +409,35 @@ function renderApp() {
 	}
 
 	function renderDiscussionsScreen(link) {
-		var discussionsElement = Element('div').text('Discussions Screen');
+		var theGroup = og.groups.at(0)
+		var discussionsElement = Element('div', {class: 'ui raised segment'});
+		theGroup.discussions.sort(byDate).forEach(renderDiscussion)
+
+		//TODO add new post
+
+
+
+
 		link.screen = new Screen({element: discussionsElement});
+
+		function byDate(a,b) {
+			if (a.created < b.created) return -1;
+			if (a.created > b.created) return 1;
+			return 0;
+		}
+		function renderDiscussion(discussion) {
+			discussionsElement.append(
+				Element('div', {class:'ui compact segment'}).append(
+					Element('div', {class:'ui'}).append(
+						Element('span', {class:''}).text(discussion.user.name),
+						Element('span', {class:''}).text(discussion.created.format())
+					),
+					Element('div', {class:'ui'}).append(
+						Element('span').text(discussion.text)
+					)
+				)
+			);
+		}
 	}
 
 	function renderTimelineScreen(link) {
@@ -426,6 +453,9 @@ function renderApp() {
 
 function loadSession(cb) {
 	var fakeSession = JSON.parse('{"id":"9AfuX1pJdNqmNMRAViMGJ5p09RctjPBm","user":{"id":2,"name":"Scott Chantry","role":1},"course":{"id":1,"name":"Sample Course 101"},"assignment":{"id":1,"name":"Test","courseID":1,"rubric":{"id":1,"title":"MyRubric","criterion":[]}},"groups":[{"id":1,"name":"Group 1","members":[{"id":3,"name":"Jenalee Chantry","role":2}],"tasks":[{"id":1,"name":"Task1","description":"This is task 1","startDate":1583391600000,"endDate":1583733600000,"groupTask":false,"taskAssignments":[{"id":1,"status":1,"canvasUserID":3}],"discussions":[],"canvasAssignmentID":1},{"id":2,"name":"Task2","description":"This is task 2","startDate":1583820000000,"endDate":1584597600000,"groupTask":false,"taskAssignments":[{"id":2,"status":2,"canvasUserID":3}],"discussions":[],"canvasAssignmentID":1}],"discussions":[],"courseID":1},{"id":2,"name":"Group2","members":[],"tasks":[],"discussions":[],"courseID":1}]}');
+	fakeSession.groups[0].discussions.push({created:new Date(2020,1,1,10,10,0,0), text:"Discussion text", canvasUserID:2});
+	fakeSession.groups[0].discussions.push({created:new Date(2020,2,2,13,10,0,0), text:"Discussion text2", canvasUserID:3});
+
 	og.add('session', fakeSession, cb);
 	return;//TODO remove this
 

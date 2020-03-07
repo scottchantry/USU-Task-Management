@@ -185,11 +185,12 @@ function setModelMethods(schemas, og) {
 	schemas.discussion.methods.save = function(cb) {
 		var model = this, query, parameters;
 		if (this.isNewUnsaved()) {
-			query = "INSERT INTO [Discussions] (text, canvasGroupID, taskID) " +
-				"VALUES (@text, @canvasGroupID, @taskID); " +
+			query = "INSERT INTO [Discussions] (text, canvasUserID, canvasGroupID, taskID) " +
+				"VALUES (@text, @canvasUserID, @canvasGroupID, @taskID); " +
 				"select id, created FROM [Discussions] WHERE id=@@identity;";
 			parameters = [
 				{name: 'text', dataType: db.dataTypes.Text, value: model.text},
+				{name: 'canvasUserID', dataType: db.dataTypes.Int, value: (model.user && model.user.id)},
 				{name: 'canvasGroupID', dataType: db.dataTypes.Int, value: (model.group && model.group.id)},
 				{name: 'taskID', dataType: db.dataTypes.Int, value: (model.task && model.task.id)}
 			];
