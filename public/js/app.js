@@ -91,6 +91,7 @@ function renderApp() {
 						alert('delete click')
 						//TODO show modal to confirm
 						//task.erase();
+						//task.save()
 					})
 				)
 			);
@@ -107,8 +108,9 @@ function renderApp() {
 					if (assignment.status === 2) inProgress++;
 					else if (assignment.status === 3) completed++;
 				});
-				//TODO set status buttons
-				statusElement.text('status')
+				if (completed===task.taskAssignments.length) statusElement.text('Complete');
+				else if (inProgress) statusElement.text('In Progress');
+				else statusElement.text('Not Started');
 			});
 			task.subscribe('deleted', true, function() {
 				taskRow.remove()
@@ -144,10 +146,15 @@ function renderApp() {
 			}
 			function addAssignmentRow(assignment) {
 				var assignmentRow, assignmentStatusElement;
+				var definedButton, progressButton, completedButton;
 				assignmentRow=Element('tr', {class: 'assignmentRow'}).append(
 					Element('td', {class: 'collapsing'}),
 					Element('td').model(assignment.user, 'name'), //TODO change to drop down
-					assignmentStatusElement = Element('td', {class: 'collapsing'}),
+					assignmentStatusElement = Element('td', {class: 'collapsing'}).append(
+						definedButton=Element('button', {class: 'ui icon button', text:'N', title:'Not Started'}).click(setStatus(1)),
+						progressButton=Element('button', {class: 'ui icon button', text:'P', title:'In Progress'}).click(setStatus(2)),
+						completedButton=Element('button', {class: 'ui icon button', text:'C', title:'Complete'}).click(setStatus(3))
+					),
 					Element('td', {class: 'collapsing'}),
 					Element('td', {class: 'collapsing'}),
 					Element('td', {class: 'collapsing delete'}).append(
@@ -156,6 +163,7 @@ function renderApp() {
 							alert('delete click')
 							//TODO show modal to confirm
 							//assignment.erase();
+							//task.save()
 						})
 					)
 				);
@@ -166,6 +174,17 @@ function renderApp() {
 				}
 				insertAfter.after(assignmentRow);
 				assignment.subscribe('deleted', true, function(){assignmentRow.remove()});
+				assignment.subscribe('status', function() {
+					definedButton.removeClass('primary');
+					progressButton.removeClass('primary');
+					completedButton.removeClass('primary');
+					if (assignment.status===1) definedButton.addClass('primary');
+					else if (assignment.status===2) progressButton.addClass('primary');
+					else if (assignment.status===3) completedButton.addClass('primary');
+				});
+				function setStatus(status) {
+					return function() {assignment.status=status}
+				}
 			}
 		}
 
