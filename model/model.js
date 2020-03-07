@@ -154,7 +154,7 @@ function setModelMethods(schemas, og) {
 			parameters.push({name: 'groupID', dataType: db.dataTypes.Int, value: groupID});
 		}
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			var tasks = og.add('task', rows);
 			var tasksLoaded = 0;
 			if (tasks.length === 0) doneLoading();
@@ -175,7 +175,7 @@ function setModelMethods(schemas, og) {
 		var query = "SELECT * FROM [Rubrics] WHERE canvasAssignmentID=@assignmentID";
 		var parameters = [{name: 'assignmentID', dataType: db.dataTypes.Int, value: model.id}];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			if (rows.length === 0) return cb();
 			var rubric = og.add('rubric', rows[0]);
 			model.rubric = rubric;
@@ -200,7 +200,7 @@ function setModelMethods(schemas, og) {
 		}
 
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			model.applyUnsavedChanges(rows[0]);
 			cb();
 		});
@@ -208,7 +208,7 @@ function setModelMethods(schemas, og) {
 	schemas.group.methods.loadMembers = function(cb) {
 		var model = this;
 		canvas.getGroupMembers(model, function(err, users) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			users.forEach(function(user) {
 				og.add('user', {id: user.id, name: user.name, role: 2, groupID: model.id});
 			});
@@ -218,7 +218,7 @@ function setModelMethods(schemas, og) {
 	schemas.group.methods.loadInstructor = function(cb) {
 		var model = this;
 		canvas.getInstructor(model.course, function(err, instructor) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			og.add('user', {id: instructor.id, name: instructor.name, role: 1, groupID: model.id});
 			cb();
 		});
@@ -228,7 +228,7 @@ function setModelMethods(schemas, og) {
 		var query = "SELECT * FROM [Discussions] WHERE canvasGroupID=@groupID";
 		var parameters = [{name: 'groupID', dataType: db.dataTypes.Int, value: model.id}];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			og.add('discussion', rows);
 			cb();
 		});
@@ -260,7 +260,7 @@ function setModelMethods(schemas, og) {
 		var query = "SELECT * FROM [RubricCriterion] WHERE rubricID=@rubricID";
 		var parameters = [{name: 'rubricID', dataType: db.dataTypes.Int, value: model.id}];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			var criterion = og.add('rubricCriteria', rows);
 			var criteriaLoaded = 0;
 			if (criterion.length === 0) doneLoading();
@@ -297,7 +297,7 @@ function setModelMethods(schemas, og) {
 			{name: 'canvasAssignmentID', dataType: db.dataTypes.Int, value: (model.assignment && model.assignment.id)}
 		];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			if (model.get("deleted")) {
 				model.erase();
 				cb();
@@ -317,7 +317,7 @@ function setModelMethods(schemas, og) {
 			parameters.push({name: 'groupID', dataType: db.dataTypes.Int, value: groupID});
 		}
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			og.add('rubricRating', rows);
 			cb();
 		});
@@ -344,7 +344,7 @@ function setModelMethods(schemas, og) {
 			{name: 'totalPoints', dataType: db.dataTypes.Decimal, value: model.totalPoints}
 		];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			if (model.get("deleted")) {
 				model.erase();
 				cb();
@@ -385,7 +385,7 @@ function setModelMethods(schemas, og) {
 			{name: 'points', dataType: db.dataTypes.Decimal, value: model.points}
 		];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			model.applyUnsavedChanges(rows[0]);
 			cb();
 		});
@@ -406,7 +406,7 @@ function setModelMethods(schemas, og) {
 		var query = "SELECT * FROM [TaskAssignments] WHERE taskID=@taskID";
 		var parameters = [{name: 'taskID', dataType: db.dataTypes.Int, value: model.id}];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			og.add('taskAssignment', rows);
 			cb();
 		});
@@ -416,7 +416,7 @@ function setModelMethods(schemas, og) {
 		var query = "SELECT * FROM [Discussions] WHERE taskID=@taskID";
 		var parameters = [{name: 'taskID', dataType: db.dataTypes.Int, value: model.id}];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			og.add('discussion', rows);
 			cb();
 		});
@@ -447,7 +447,7 @@ function setModelMethods(schemas, og) {
 			{name: 'groupTask', dataType: db.dataTypes.Bit, value: model.groupTask}
 		];
 		db.executeSQL(query, parameters, function(err, rows) {
-			if (err) cb(err);
+			if (err) return cb(err);
 			if (model.get("deleted")) {
 				model.erase();
 				cb();
