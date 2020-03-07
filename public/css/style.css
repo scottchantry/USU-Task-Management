@@ -13,3 +13,7 @@ tr.taskRow ~ tr.assignmentRow {display:none}
 .ui.table>thead>tr>th.delete, .ui.table>tbody>tr>td.delete {width:80px;text-align:center}
 td.delete>i {opacity: 0.5}
 td.delete>i:hover {opacity: 1}
+
+.ui.table > tbody > tr > td.status {padding-top:unset;padding-bottom:unset}
+
+.ui.calendar > .ui.input > input {max-width:calc(100% - 2rem)}

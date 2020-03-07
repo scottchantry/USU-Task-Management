@@ -128,6 +128,13 @@ var model = {
 			},
 			formatEndDate: function() {
 				return this.endDate.format();
+			},
+			validates: function() {
+				var task=this;
+				if (!task.name || task.name.length===0) return false;
+				if (!task.startDate || !task.endDate) return false;
+				if (!task.taskAssignments.validates()) return false;
+				return true;
 			}
 		},
 		plural: 'tasks'
@@ -139,6 +146,18 @@ var model = {
 			task: {type: "task", key: "taskID", reciprocal: "taskAssignments"},
 			user: {type: "user", key: "canvasUserID"},
 			status: "long"
+		},
+		methods:{
+			validates:function() {
+				if (!this.user) return false;
+				if (!this.status) return false;
+				return true;
+			}
+		},
+		collectionMethods:{
+			validates:function() {
+				return this.every(function(model){return model.validates()})
+			}
 		},
 		plural: 'taskAssignments',
 		bubbleEvents: {to: "task"}

@@ -53,9 +53,12 @@ function renderApp() {
 	}
 
 	function renderTasksScreen(link) {
-		var tasksBody, theGroup = og.groups.at(0);
+		var tasksBody, theGroup = og.groups.at(0), newTaskButton;
 		var tasksElement = Element('div', {class: 'ui raised segment'}).append(
-			Element('div').text('All Tasks'),
+			newTaskButton=Element('button', {class:'mini ui labeled icon button'}).append(
+				Element('i', {class:'plus icon'}),
+				"New Task"
+			),
 			Element('table', {class: 'ui selectable single line table'}).append(
 				Element('thead').append(
 					Element('tr').append(
@@ -70,13 +73,19 @@ function renderApp() {
 				tasksBody = Element('tbody')
 			)
 		);
+		newTaskButton.click(function() {
+			og.add('task', {canvasAssignmentID:session.assignment.id, canvasGroupID:theGroup.id});
+			//TODO click the task
+		})
 		theGroup.tasks.forEach(renderTaskRow);
-
+		theGroup.tasks.subscribe('add', true, function(key, value) {
+			renderTaskRow(value).click();
+		});
 		link.screen = new Screen({element: tasksElement});
 
 		function renderTaskRow(task) {
 			var taskRow, statusElement, startDateElement, endDateElement;
-
+			var taskLink = new Link({task:task, renderScreen:renderTaskScreen});
 			taskRow = Element('tr', {class: 'taskRow'}).append(
 				Element('td', {class: 'collapsing'}).append(
 					Element('i', {class: 'caret right icon'}).click(expander)
@@ -88,19 +97,21 @@ function renderApp() {
 				Element('td', {class: 'collapsing delete'}).append(
 					Element('i', {class: 'trash alternate icon'}).click(function(e) {
 						e.stopPropagation();
-						alert('delete click')
-						//TODO show modal to confirm
-						//task.erase();
-						//task.save()
+						deleteModal('Delete Task', "Are you sure you want to delete the following task?<br><br>"+task.name, function(deleteTask) {
+							if (deleteTask) {
+								task.erase();
+								//TODO task.save()
+							}
+						});
 					})
 				)
 			);
 
 			task.subscribe('startDate', function() {
-				startDateElement.text(task.formatStartDate())
+				if (task.startDate) startDateElement.text(task.formatStartDate())
 			});
 			task.subscribe('endDate', function() {
-				endDateElement.text(task.formatEndDate())
+				if (task.endDate) endDateElement.text(task.formatEndDate())
 			});
 			task.subscribe('taskAssignments', function() {
 				var inProgress = 0, completed = 0;
@@ -116,14 +127,14 @@ function renderApp() {
 				taskRow.remove()
 			});
 			taskRow.click(function() {
-				//TODO go to task screen OR SHOULD WE REQUIRE CLICKING ON THE TASK NAME
-				alert('row click')
+				taskLink.show();
 			});
 			tasksBody.append(taskRow);
 
 			task.taskAssignments.forEach(addAssignmentRow);
 			task.taskAssignments.subscribe('add', true, function(key, value){addAssignmentRow(value)});
 
+			return taskRow;
 			function expander(e) {
 				e.stopPropagation();
 				var elem = $(this);
@@ -149,21 +160,23 @@ function renderApp() {
 				var definedButton, progressButton, completedButton;
 				assignmentRow=Element('tr', {class: 'assignmentRow'}).append(
 					Element('td', {class: 'collapsing'}),
-					Element('td').model(assignment.user, 'name'), //TODO change to drop down
-					assignmentStatusElement = Element('td', {class: 'collapsing'}).append(
-						definedButton=Element('button', {class: 'ui icon button', text:'N', title:'Not Started'}).click(setStatus(1)),
-						progressButton=Element('button', {class: 'ui icon button', text:'P', title:'In Progress'}).click(setStatus(2)),
-						completedButton=Element('button', {class: 'ui icon button', text:'C', title:'Complete'}).click(setStatus(3))
+					Element('td').model(assignment.user, 'name'), //TODO change to drop down?
+					assignmentStatusElement = Element('td', {class: 'collapsing status'}).append(
+						definedButton=Element('button', {class: 'mini ui icon button', text:'N', title:'Not Started'}).click(setStatus(1)),
+						progressButton=Element('button', {class: 'mini ui icon button', text:'P', title:'In Progress'}).click(setStatus(2)),
+						completedButton=Element('button', {class: 'mini ui icon button', text:'C', title:'Complete'}).click(setStatus(3))
 					),
 					Element('td', {class: 'collapsing'}),
 					Element('td', {class: 'collapsing'}),
 					Element('td', {class: 'collapsing delete'}).append(
 						Element('i', {class: 'trash alternate icon'}).click(function(e) {
 							e.stopPropagation();
-							alert('delete click')
-							//TODO show modal to confirm
-							//assignment.erase();
-							//task.save()
+							deleteModal('Delete Task Assignment', "Are you sure you want to delete the task assignment for "+assignment.user.name+"?", function(deleteAssignment) {
+								if (deleteAssignment) {
+									assignment.erase();
+									//TODO task.save()
+								}
+							});
 						})
 					)
 				);
@@ -183,11 +196,216 @@ function renderApp() {
 					else if (assignment.status===3) completedButton.addClass('primary');
 				});
 				function setStatus(status) {
-					return function() {assignment.status=status}
+					return function() {
+						assignment.status=status;
+						//TODO task.save();
+					}
 				}
 			}
 		}
+	}
 
+	function renderTaskScreen(link) {
+		var task = link.task, saveButton, taskNameField, startElement, startDateField, endElement, endDateField, newButton, assignmentsBody;
+
+		var taskElement = Element('div', {class: 'ui raised segment'}).append(
+			Element('div', {class: 'ui grid'}).append(
+				Element('div', {class:'sixteen wide column'}).append(
+					saveButton=Element('button', {class:'mini ui labeled icon button'}).append(
+						Element('i', {class:'save icon'}),
+						"Save"
+					)
+				),
+				Element('div', {class:'eight wide column'}).append(
+					Element('div', {class:'ui form'}).append(
+						taskNameField=Element('div', {class:'field'}).append(
+							Element('label').text("Task Name"),
+							Element('div', {class:'ui fluid input'}).append(
+								Element('input', {type:'text', placeholder:'Task Name'}).model(task, 'name')
+							)
+						)
+					)
+				),
+				Element('div', {class:'two wide column'}).append(
+					Element('div', {class:'eight wide column'}).append(
+						Element('div', {class:'ui form'}).append(
+							startDateField=Element('div', {class:'field'}).append(
+								Element('label').text("Start Date"),
+								startElement=Element('div', {class:'ui calendar'}).append(
+									Element('div', {class:'ui input left icon'}).append(
+										Element('i', {class:'calendar icon'}),
+										Element('input', {type:'text', placeholder:'Start Date'})
+									)
+								)
+							)
+						)
+					)
+				),
+				Element('div', {class:'two wide column'}).append(
+					Element('div', {class:'ui form'}).append(
+						endDateField=Element('div', {class:'field'}).append(
+							Element('label').text("End Date"),
+							endElement=Element('div', {class:'ui calendar'}).append(
+								Element('div', {class:'ui input left icon'}).append(
+									Element('i', {class:'calendar icon'}),
+									Element('input', {type:'text', placeholder:'End Date'})
+								)
+							)
+						)
+					)
+				),
+				Element('div', {class:'sixteen wide column'}).append(
+					Element('div', {class:'ui form'}).append(
+						Element('div', {class:'field'}).append(
+							Element('label').text('Description'),
+							Element('textarea').model(task, 'description')
+						)
+					)
+				),
+				Element('div', {class:'sixteen wide column'}).append(
+					Element('h4', {class:'ui header'}).text("Task Assignments"),
+					newButton=Element('button', {class:'mini ui labeled icon button'}).append(
+						Element('i', {class:'plus icon'}),
+						"New"
+					),
+					Element('table', {class: 'ui single line table'}).append(
+						Element('thead').append(
+							Element('tr').append(
+								Element('th').text('Student'),
+								Element('th').text('Status'),
+								Element('th', {class: 'delete'}).text('Delete')
+							)
+						),
+						assignmentsBody = Element('tbody')
+					)
+				)
+			)
+		);
+		task.subscribe('name', function() {
+			if (!task.name) taskNameField.addClass('error');
+			else taskNameField.removeClass('error');
+		});
+		task.subscribe('startDate', function() {
+			if (task.startDate) {
+				startElement.calendar('set date', task.startDate, true);
+				startDateField.removeClass('error');
+			}
+			else startDateField.addClass('error');
+		});
+		task.subscribe('endDate', function() {
+			if (task.endDate) {
+				endElement.calendar('set date', task.endDate, true);
+				endDateField.removeClass('error');
+			}
+			else endDateField.addClass('error');
+		});
+		if (task.startDate) startElement.calendar('set date', task.startDate, true);
+		if (task.endDate) endElement.calendar('set date', task.endDate, true);
+		startElement.calendar({
+			type:'date',
+			endCalendar:endElement,
+			onChange:function(date, text, mode) {
+				task.startDate=date.getTime();
+			},
+			formatter: {
+				date: function(date, settings) {
+					if (!date) return task.startDate.format();
+					return date.format();
+				}
+			}
+		});
+		endElement.calendar({
+			type:'date',
+			startCalendar:startElement,
+			onChange:function(date, text, mode) {
+				task.endDate=date.getTime();
+			},
+			formatter: {
+				date: function(date, settings) {
+					if (!date) return task.endDate.format();
+					return date.format();
+				}
+			}
+		});
+
+		task.taskAssignments.forEach(addAssignmentRow);
+		task.taskAssignments.subscribe('add', true, function(key, value){addAssignmentRow(value)});
+
+		task.subscribe(undefined, function() {
+			if (task.validates()) saveButton.removeClass('disabled');
+			else saveButton.addClass('disabled');
+		});
+
+		saveButton.click(function() {
+			saveButton.addClass('disabled loading');
+			task.save(function() {
+				saveButton.removeClass('loading');
+				task.publish('updateButton');
+			});
+		});
+
+		newButton.click(function() {
+			og.add('taskAssignment', {task:task, status:1, canvasUserID:session.user.id});
+		});
+
+		link.screen = new Screen({element: taskElement});
+
+		function addAssignmentRow(assignment) {
+			var assignmentRow, assignmentStatusElement, userSelect;
+			var definedButton, progressButton, completedButton;
+			assignmentRow=Element('tr', {class: 'assignmentRow'}).append(
+				Element('td').append(
+					userSelect=Element('select')
+				),
+				assignmentStatusElement = Element('td', {class: 'collapsing status'}).append(
+					definedButton=Element('button', {class: 'mini ui icon button', text:'N', title:'Not Started'}).click(setStatus(1)),
+					progressButton=Element('button', {class: 'mini ui icon button', text:'P', title:'In Progress'}).click(setStatus(2)),
+					completedButton=Element('button', {class: 'mini ui icon button', text:'C', title:'Complete'}).click(setStatus(3))
+				),
+				Element('td', {class: 'collapsing delete'}).append(
+					Element('i', {class: 'trash alternate icon'}).click(function(e) {
+						e.stopPropagation();
+						deleteModal('Delete Task Assignment', "Are you sure you want to delete the task assignment for "+assignment.user.name+"?", function(deleteAssignment) {
+							if (deleteAssignment) {
+								assignment.erase();
+							}
+						});
+					})
+				)
+			);
+
+			var userFound=false;
+			var usersArray=task.group.members.map(function(member) {
+				return {
+					name:member.name,
+					value:member.id,
+					selected:(assignment.user===member)
+				};
+			});
+			userSelect.dropdown({
+				onChange:function(value, text, selectedOption) {
+					if (!value) return;
+					assignment.user=og.users.by(value);
+				},
+				values:usersArray
+			});
+
+			assignmentsBody.append(assignmentRow);
+			assignment.subscribe('deleted', true, function(){assignmentRow.remove()});
+			assignment.subscribe('status', function() {
+				definedButton.removeClass('primary');
+				progressButton.removeClass('primary');
+				completedButton.removeClass('primary');
+				if (assignment.status===1) definedButton.addClass('primary');
+				else if (assignment.status===2) progressButton.addClass('primary');
+				else if (assignment.status===3) completedButton.addClass('primary');
+			});
+			function setStatus(status) {
+				return function() {
+					assignment.status=status;
+				}
+			}
+		}
 	}
 
 	function renderDiscussionsScreen(link) {
@@ -244,6 +462,14 @@ function Link(attr) {
 	this.default = attr.default;
 	this.selected = false;
 	this.renderScreen = attr.renderScreen.bind(null, this);
+	this.task = attr.task;
+	this.show = function() {
+		var link = this;
+		if (!link.screen) link.renderScreen();
+		currentScreen.hide();
+		currentScreen = link.screen;
+		currentScreen.show();
+	};
 	this.select = function() {
 		var link = this;
 		this.selected = true;
@@ -251,6 +477,7 @@ function Link(attr) {
 			var theLink = links[linkName];
 			if (theLink !== link) theLink.unselect();
 		});
+		if (currentScreen) currentScreen.hide();
 		link.element.addClass('active');
 		if (!link.screen) link.renderScreen();
 		currentScreen = link.screen;
@@ -341,6 +568,38 @@ jQuery.fn.extend({
 	}
 });
 
+function deleteModal(title, message, cb) {
+	var modalElement, cancelButton, deleteButton;
+	modalElement=Element('div', {class:'ui tiny modal'}).append(
+		Element('div', {class:'header'}).text(title),
+		Element('div', {class:'content'}).append(
+			Element('div', {class:'description'}).append(
+				Element('p').html(message)
+			)
+		),
+		Element('div', {class:'actions'}).append(
+			cancelButton=Element('div', {class:'ui green ok cancel button'}).append(
+				Element('i', {class:'remove icon'}),
+				"No"
+			),
+			deleteButton=Element('div', {class:'ui red approve button'}).append(
+				Element('i', {class:'trash icon'}),
+				"Delete"
+			)
+		)
+	);
+	body.append(modalElement);
+
+	cancelButton.click(function() {
+		cb(false);
+		setTimeout(function(){modalElement.remove()},250);
+	});
+	deleteButton.click(function() {
+		cb(true);
+		setTimeout(function(){modalElement.remove()},250);
+	});
+	modalElement.modal('show');
+}
 function Element(tagName, attrs) {
 	// generate jQuery-wrapped DOM without incurring the regex cost in the jQuery constructor
 	var attr, val;
