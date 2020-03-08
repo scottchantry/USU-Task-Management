@@ -10,7 +10,11 @@ $(function() {
 	og = new ObjectGraph({});
 	og.addSchemata(model, function() {
 		loadSession(function(userSession) {
+			if (userSession instanceof Error) return errorModal(userSession);
 			session = userSession;
+			session.subscribe('error', true, function(key, error) {
+				errorModal(error);
+			});
 			running = true;
 			renderApp();
 		});
@@ -75,7 +79,6 @@ function renderApp() {
 		);
 		newTaskButton.click(function() {
 			og.add('task', {canvasAssignmentID:session.assignment.id, canvasGroupID:theGroup.id});
-			//TODO click the task
 		})
 		theGroup.tasks.forEach(renderTaskRow);
 		theGroup.tasks.subscribe('add', true, function(key, value) {
@@ -100,7 +103,7 @@ function renderApp() {
 						deleteModal('Delete Task', "Are you sure you want to delete the following task?<br><br>"+task.name, function(deleteTask) {
 							if (deleteTask) {
 								task.erase();
-								//TODO task.save()
+								//TODO task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
 							}
 						});
 					})
@@ -174,7 +177,7 @@ function renderApp() {
 							deleteModal('Delete Task Assignment', "Are you sure you want to delete the task assignment for "+assignment.user.name+"?", function(deleteAssignment) {
 								if (deleteAssignment) {
 									assignment.erase();
-									//TODO task.save()
+									//TODO task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
 								}
 							});
 						})
@@ -198,7 +201,7 @@ function renderApp() {
 				function setStatus(status) {
 					return function() {
 						assignment.status=status;
-						//TODO task.save();
+						//TODO task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
 					}
 				}
 			}
@@ -338,7 +341,8 @@ function renderApp() {
 
 		saveButton.click(function() {
 			saveButton.addClass('disabled loading');
-			task.save(function() {
+			task.save(function(result) {
+				if (result instanceof Error) return session.publish("error", result);
 				saveButton.removeClass('loading');
 				task.publish('updateButton');
 			});
@@ -409,16 +413,44 @@ function renderApp() {
 	}
 
 	function renderDiscussionsScreen(link) {
-		var theGroup = og.groups.at(0)
-		var discussionsElement = Element('div', {class: 'ui raised segment'});
+		var theGroup = og.groups.at(0), newPostElement, newPostText, postButton;
+		var discussionsElement = Element('div', {class: 'ui raised segment'}).append(
+			newPostElement = Element('div', {class:'ui form post'}).append(
+				Element('div', {class:'field'}).append(
+					newPostText=Element('textarea')
+				),
+				postButton=Element('button', {class:'ui primary labeled icon button disabled'}).append(
+					Element('i', {class:'edit icon'}),
+					"Post"
+				)
+			)
+		);
+
+		discussionsElement.append(newPostElement);
 		theGroup.discussions.sort(byDate).forEach(renderDiscussion)
+		newPostText.on('input', function() {
+			if (this.value && this.value.trim().length) postButton.removeClass('disabled');
+			else postButton.addClass('disabled');
+		})
+		postButton.click(function() {
+			postButton.addClass('disabled loading');
+			newPostText.parent().addClass('disabled');
+			var newDiscussion = og.add('discussion', {text:newPostText.val().trim(), user:session.user, group:theGroup});
+			newDiscussion.created=new Date().getTime()
+			newDiscussion.save(function(result) {
+				if (result instanceof Error) return session.publish("error", result);
+				renderDiscussion(newDiscussion);
+				postButton.removeClass('disabled loading');
+				newPostText.val("");
+				newPostText.parent().removeClass('disabled');
+				discussionsElement.animate({scrollTop: discussionsElement[0].scrollHeight}, "slow");
+			});
+		});
 
-		//TODO add new post
-
-
-
-
-		link.screen = new Screen({element: discussionsElement});
+		setImmediate(function() {
+			discussionsElement.animate({scrollTop: discussionsElement[0].scrollHeight}, "slow");
+		});
+		link.screen = new Screen({element: discussionsElement, class:'discussion'});
 
 		function byDate(a,b) {
 			if (a.created < b.created) return -1;
@@ -426,14 +458,14 @@ function renderApp() {
 			return 0;
 		}
 		function renderDiscussion(discussion) {
-			discussionsElement.append(
-				Element('div', {class:'ui compact segment'}).append(
+			newPostElement.before(
+				Element('div', {class:'ui post'}).append(
 					Element('div', {class:'ui'}).append(
-						Element('span', {class:''}).text(discussion.user.name),
-						Element('span', {class:''}).text(discussion.created.format())
+						Element('span', {class:'name'}).text(discussion.user.name),
+						Element('span', {class:'datetime'}).text(discussion.created.format() + " " + discussion.created.formatTime())
 					),
 					Element('div', {class:'ui'}).append(
-						Element('span').text(discussion.text)
+						Element('p', {class:'message'}).text(discussion.text)
 					)
 				)
 			);
@@ -477,6 +509,7 @@ function loadSession(cb) {
 
 function Screen(attr) {
 	this.element = Element('div', {class: "screen"}).append(attr.element);
+	if (attr.class) this.element.addClass(attr.class);
 	screenContainer.append(this.element);
 	this.show = function() {
 		this.element.show();
@@ -524,6 +557,18 @@ function Link(attr) {
 // UI Helpers
 window.Date.prototype.format = function() {
 	if (this) return (this.getMonth() + 1) + '/' + this.getDate() + '/' + this.getFullYear();
+	else return '';
+};
+window.Date.prototype.formatTime = function() {
+	if (this) {
+		var hours, minutes, meridian;
+		if (this.getHours() === 0) hours = 12;
+		else if (this.getHours() > 12) hours = this.getHours()-12;
+		else hours = this.getHours();
+		minutes = ("0"+this.getMinutes()).slice(-2);
+		meridian = (this.getHours() >= 12 ? "PM" : "AM");
+		return hours + ":" + minutes + " " + meridian;
+	}
 	else return '';
 };
 jQuery.fn.extend({
@@ -622,11 +667,33 @@ function deleteModal(title, message, cb) {
 
 	cancelButton.click(function() {
 		cb(false);
-		setTimeout(function(){modalElement.remove()},250);
+		setTimeout(function(){modalElement.remove()},500);
 	});
 	deleteButton.click(function() {
 		cb(true);
 		setTimeout(function(){modalElement.remove()},250);
+	});
+	modalElement.modal('show');
+}
+function errorModal(error) {
+	var modalElement, dismissButton;
+	modalElement=Element('div', {class:'ui tiny modal'}).append(
+		Element('div', {class:'header'}).text("Error"),
+		Element('div', {class:'content'}).append(
+			Element('div', {class:'description'}).append(
+				Element('p').html(error.message)
+			)
+		),
+		Element('div', {class:'actions'}).append(
+			dismissButton=Element('div', {class:'ui approve button'}).append(
+				"Dismiss"
+			)
+		)
+	);
+	body.append(modalElement);
+
+	dismissButton.click(function() {
+		setTimeout(function(){modalElement.remove()},500);
 	});
 	modalElement.modal('show');
 }

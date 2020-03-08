@@ -17,3 +17,11 @@ td.delete>i:hover {opacity: 1}
 .ui.table > tbody > tr > td.status {padding-top:unset;padding-bottom:unset}
 
 .ui.calendar > .ui.input > input {max-width:calc(100% - 2rem)}
+
+.screen.discussion .ui.post {width:410px}
+.screen.discussion .ui.post {margin-bottom:20px}
+.screen.discussion .ui > .name {font-weight: bold;font-size:1.1rem}
+.screen.discussion .ui > .datetime {margin-left:10px;font-size:0.8rem;color:#888;}
+.screen.discussion .ui > .message {margin-top:5px;}
+
+.screen > .ui.raised.segment {height:100%;overflow:hidden;overflow-y:auto}
