@@ -1,4 +1,4 @@
-var og, session, running = false, body, bodyLoader, currentScreen, links, screenContainer;
+var og, session, running = false, body, bodyLoader, currentGroup, currentScreen, links, screenContainer;
 var ajaxPath = '/app/';
 
 $(function() {
@@ -12,6 +12,7 @@ $(function() {
 		loadSession(function(userSession) {
 			if (userSession instanceof Error) return errorModal(userSession);
 			session = userSession;
+			currentGroup=session.groups.at(0);
 			session.subscribe('error', true, function(key, error) {
 				errorModal(error);
 			});
@@ -23,6 +24,21 @@ $(function() {
 
 function renderApp() {
 	var menuElement;
+	var course = session.course, assignment=session.assignment, groupElement;
+	if (session.groups.length>1) {
+		groupElement=Element('select');
+		groupElement.append(session.groups.map(function(group){
+			var option=Element('option', {value:group.id, text:group.name});
+			if (currentGroup===group) option.prop('selected', true);
+			return option;
+		}));
+		groupElement.on('change', function() {
+			var newGroup=og.groups.by(this.value);
+			currentGroup=newGroup;
+			menuElement.find('a.active').click();
+		});
+	}
+	else groupElement=Element('span').model(currentGroup, 'name');
 	links = {
 		home: new Link({name: 'Home', default: true, renderScreen: renderHomeScreen}),
 		tasks: new Link({name: 'Tasks', renderScreen: renderTasksScreen}),
@@ -36,6 +52,13 @@ function renderApp() {
 			Element('div', {class: 'logo'}).append(
 				Element('img', {src: '/app/images/logo.png'})
 			)
+		),
+		Element('div', {class:'breadcrumbs'}).append(
+			Element('span').model(course, 'name'),
+			" > ",
+			Element('span').model(assignment, 'name'),
+			" > ",
+			groupElement
 		),
 		screenContainer = Element('div', {class: 'screenContainer'})
 	);
@@ -53,11 +76,12 @@ function renderApp() {
 
 	function renderHomeScreen(link) {
 		var homeElement = Element('div').text('Home Screen');
-		link.screen = new Screen({element: homeElement});
+
+		link[currentGroup.id].screen = new Screen({element: homeElement});
 	}
 
 	function renderTasksScreen(link) {
-		var tasksBody, theGroup = og.groups.at(0), newTaskButton;
+		var tasksBody, theGroup = currentGroup, newTaskButton;
 		var tasksElement = Element('div', {class: 'ui raised segment'}).append(
 			newTaskButton=Element('button', {class:'mini ui labeled icon button'}).append(
 				Element('i', {class:'plus icon'}),
@@ -84,7 +108,7 @@ function renderApp() {
 		theGroup.tasks.subscribe('add', true, function(key, value) {
 			renderTaskRow(value).click();
 		});
-		link.screen = new Screen({element: tasksElement});
+		link[currentGroup.id].screen = new Screen({element: tasksElement});
 
 		function renderTaskRow(task) {
 			var taskRow, statusElement, startDateElement, endDateElement;
@@ -352,7 +376,7 @@ function renderApp() {
 			og.add('taskAssignment', {task:task, status:1, canvasUserID:session.user.id});
 		});
 
-		link.screen = new Screen({element: taskElement});
+		link[currentGroup.id].screen = new Screen({element: taskElement});
 
 		function addAssignmentRow(assignment) {
 			var assignmentRow, assignmentStatusElement, userSelect;
@@ -413,7 +437,7 @@ function renderApp() {
 	}
 
 	function renderDiscussionsScreen(link) {
-		var theGroup = og.groups.at(0), newPostElement, newPostText, postButton;
+		var theGroup = currentGroup, newPostElement, newPostText, postButton;
 		var discussionsElement = Element('div', {class: 'ui raised segment'}).append(
 			newPostElement = Element('div', {class:'ui form post'}).append(
 				Element('div', {class:'field'}).append(
@@ -436,7 +460,7 @@ function renderApp() {
 			postButton.addClass('disabled loading');
 			newPostText.parent().addClass('disabled');
 			var newDiscussion = og.add('discussion', {text:newPostText.val().trim(), user:session.user, group:theGroup});
-			newDiscussion.created=new Date().getTime()
+			//newDiscussion.created=new Date().getTime()
 			newDiscussion.save(function(result) {
 				if (result instanceof Error) return session.publish("error", result);
 				renderDiscussion(newDiscussion);
@@ -450,7 +474,7 @@ function renderApp() {
 		setImmediate(function() {
 			discussionsElement.animate({scrollTop: discussionsElement[0].scrollHeight}, "slow");
 		});
-		link.screen = new Screen({element: discussionsElement, class:'discussion'});
+		link[currentGroup.id].screen = new Screen({element: discussionsElement, class:'discussion'});
 
 		function byDate(a,b) {
 			if (a.created < b.created) return -1;
@@ -474,12 +498,12 @@ function renderApp() {
 
 	function renderTimelineScreen(link) {
 		var timelineElement = Element('div').text('Timeline Screen');
-		link.screen = new Screen({element: timelineElement});
+		link[currentGroup.id].screen = new Screen({element: timelineElement});
 	}
 
 	function renderGradingScreen(link) {
 		var gradingElement = Element('div').text('Grading Screen');
-		link.screen = new Screen({element: gradingElement});
+		link[currentGroup.id].screen = new Screen({element: gradingElement});
 	}
 }
 
@@ -524,13 +548,15 @@ function Link(attr) {
 	this.name = attr.name;
 	this.default = attr.default;
 	this.selected = false;
+	this.groups={};
 	this.renderScreen = attr.renderScreen.bind(null, this);
 	this.task = attr.task;
 	this.show = function() {
 		var link = this;
-		if (!link.screen) link.renderScreen();
+		if (!link[currentGroup.id]) link[currentGroup.id]={};
+		if (!link[currentGroup.id].screen) link.renderScreen();
 		currentScreen.hide();
-		currentScreen = link.screen;
+		currentScreen = link[currentGroup.id].screen;
 		currentScreen.show();
 	};
 	this.select = function() {
@@ -542,12 +568,15 @@ function Link(attr) {
 		});
 		if (currentScreen) currentScreen.hide();
 		link.element.addClass('active');
-		if (!link.screen) link.renderScreen();
-		currentScreen = link.screen;
+		if (!link[currentGroup.id]) link[currentGroup.id]={};
+		if (!link[currentGroup.id].screen) link.renderScreen();
+		currentScreen = link[currentGroup.id].screen;
 		currentScreen.show();
 	};
 	this.unselect = function() {
-		if (this.screen) this.screen.hide();
+		var link=this;
+		if (!link[currentGroup.id]) link[currentGroup.id]={};
+		if (link[currentGroup.id].screen) link[currentGroup.id].screen.hide();
 		this.selected = false;
 		this.element.removeClass('active');
 	};
