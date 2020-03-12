@@ -41,3 +41,4 @@ td.delete>i:hover {opacity: 1}
 	bottom:0;
 	height:100%;
 }
+.ui.ratingTable td:not(:last-child) {border-right: 1px dashed rgba(34,36,38,.3)}
