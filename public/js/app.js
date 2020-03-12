@@ -502,7 +502,117 @@ function renderApp() {
 	}
 
 	function renderGradingScreen(link) {
-		var gradingElement = Element('div').text('Grading Screen');
+		var editable=session.user.isInstructor(), rubric=og.rubrics.at(0), saveRubricButton, criteriaBody, newCriteriaButton;
+		var gradingElement = Element('div', {class: 'ui raised segment'}).append(
+			saveRubricButton=Element('button', {class:'mini ui labeled icon button'}).append(
+				Element('i', {class:'save icon'}),
+				"Save"
+			),
+			Element('table', {class: 'ui celled single line table'}).append(
+				Element('thead').append(
+					Element('tr').append(
+						Element('th', {colspan:4}).append(
+							Element('div', {class:'ui form'}).append(
+								taskNameField=Element('div', {class:'field'}).append(
+									Element('label').text("Rubric Title"),
+									Element('div', {class:'ui fluid input'}).append(
+										(editable ?
+												Element('input', {type:'text', placeholder:'Rubric Title'}).model(rubric, 'title')
+												:
+												Element('span').model(rubric, 'title')
+										)
+									)
+								)
+							)
+						)
+					)
+				),
+				Element('thead').append(
+					Element('tr').append(
+						Element('th').text('Criteria'),
+						Element('th').text('Ratings'),
+						Element('th').text('Points'),
+						Element('th', {class: 'delete'}).text('Delete')
+					)
+				),
+				criteriaBody = Element('tbody'),
+				Element('tfoot').append(
+					Element('tr').append(
+						Element('th', {colspan:4}).append(
+							newCriteriaButton=Element('button', {class:'mini ui labeled icon button'}).append(
+								Element('i', {class:'plus icon'}),
+								"New Criteria"
+							)
+						)
+					)
+				)
+			)
+		);
+		saveRubricButton.click(function() {
+			alert('save me please')
+		});
+		newCriteriaButton.click(function() {
+			og.add('rubricCriteria', {rubric:rubric, ratings:[{description:'Full Marks', points:5},{description:'No Marks', points:0}]});
+		});
+
+		rubric.criterion.forEach(addCriteria);
+		rubric.criterion.subscribe('add', true, function(key, value) {
+			addCriteria(value);
+		});
+
+		function addCriteria(criteria) {
+			var criteriaRow, ratingsRow;
+			criteriaRow=Element('tr', {class: 'criteriaRow'}).append(
+				Element('td').append(
+					(editable ?
+						Element('div', {class:'ui form'}).append(
+							Element('div', {class:'field'}).append(
+								Element('textarea').model(criteria, 'description')
+							)
+						)
+						:
+						Element('span').model(criteria, 'description')
+					)
+				),
+				Element('td', {class: 'collapsing ratingCell'}).append(
+					Element('table', {class: 'ui single line table ratingTable'}).append(
+						Element('tbody').append(
+							ratingsRow=Element('tr')
+						)
+					)
+				),
+				Element('td', {class: 'collapsing'}).append(
+					(editable?
+						Element('input', {type:'text'}).model(criteria, 'totalPoints').on('keydown', isNumberKey)
+						:
+						Element('span').model(criteria, 'totalPoints')
+					)
+				),
+				Element('td', {class: 'collapsing delete'}).append(
+					Element('i', {class: 'trash alternate icon'}).click(function(e) {
+						e.stopPropagation();
+						deleteModal('Delete Criteria', "Are you sure you want to delete this criteria?", function(deleteCriteria) {
+							if (deleteCriteria) {
+								criteria.erase();
+							}
+						});
+					})
+				)
+			);
+
+			criteria.ratings.forEach(addRating);
+			criteria.ratings.subscribe('add', true, function(key, value) {addRating(value)});
+
+			criteriaBody.append(criteriaRow);
+			criteria.subscribe('deleted', true, function(){criteriaRow.remove()});
+			function addRating(rating) {
+				//TODO
+				ratingsRow.append(
+					Element('td').model(rating, 'description')
+				)
+			}
+		}
+
 		link[currentGroup.id].screen = new Screen({element: gradingElement});
 	}
 }
@@ -781,4 +891,24 @@ function Element(tagName, attrs) {
 		});
 	}
 	return jQElement;
+}
+function isNumberKey(event) {
+	var keyCode = (event.keyCode||event.which);
+	if (keyCode > 95 && keyCode < 106) keyCode=keyCode-48;//Numpad
+	var char = String.fromCharCode(keyCode);
+	if ((isNaN(char)) && [8, 35, 36, 37, 39, 45, 46, 109, 189].indexOf(keyCode)=== -1) event.preventDefault();
+	return true;
+}
+function isNumberOrDecimalKey(event) {
+	var keyCode=(event.keyCode || event.which);
+	if (keyCode>95 && keyCode<106) keyCode=keyCode-48;//Numpad
+	var char=String.fromCharCode(keyCode);
+	if ((isNaN(char)) && [8, 35, 36, 37, 39, 45, 46, 109, 189].indexOf(keyCode)=== -1) {
+		if ([110, 190].indexOf(keyCode)>=0 && this.value) {
+			var val=this.value.replace(/[^0-9.]/g, '');
+			if (val.split('.').length>1) event.preventDefault();
+		}
+		else event.preventDefault();
+	}
+	return true;
 }

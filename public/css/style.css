@@ -30,3 +30,14 @@ td.delete>i:hover {opacity: 1}
 .screen.discussion .ui > .message {margin-top:5px;}
 
 .screen > .ui.raised.segment {height:100%;overflow:hidden;overflow-y:auto}
+
+.ui.table > tbody > tr.criteriaRow > td.ratingCell {
+	padding:0;
+	position:relative;
+}
+.ui.ratingTable {
+	position:absolute;
+	top:0;
+	bottom:0;
+	height:100%;
+}

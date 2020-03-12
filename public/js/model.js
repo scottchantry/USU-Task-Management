@@ -171,6 +171,10 @@ var model = {
 			role: 'long',
 			group: {type: "group", key: "groupID", reciprocal: "members"}
 		},
+		methods:{
+			isInstructor:function(){return this.role===1},
+			isStudent:function(){return this.role===2},
+		},
 		plural: 'users'
 	}
 };
