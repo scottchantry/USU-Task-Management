@@ -502,7 +502,7 @@ function renderApp() {
 	}
 
 	function renderGradingScreen(link) {
-		var editable=session.user.isInstructor(), rubric=og.rubrics.at(0), saveRubricButton, criteriaBody, newCriteriaButton;
+		var editable=session.user.isInstructor(), rubric=og.rubrics.at(0), saveRubricButton, criteriaBody, newCriteriaButton, totalPointsElement;
 		var gradingElement = Element('div', {class: 'ui raised segment'}).append(
 			saveRubricButton=Element('button', {class:'mini ui labeled icon button'}).append(
 				Element('i', {class:'save icon'}),
@@ -542,7 +542,8 @@ function renderApp() {
 							newCriteriaButton=Element('button', {class:'mini ui labeled icon button'}).append(
 								Element('i', {class:'plus icon'}),
 								"New Criteria"
-							)
+							),
+							totalPointsElement=Element('span', {class:'rubricTotalPoints'})
 						)
 					)
 				)
@@ -552,16 +553,24 @@ function renderApp() {
 			alert('save me please')
 		});
 		newCriteriaButton.click(function() {
-			og.add('rubricCriteria', {rubric:rubric, ratings:[{description:'Full Marks', points:5},{description:'No Marks', points:0}]});
+			og.add('rubricCriteria', {rubric:rubric, totalPoints:5, ratings:[{description:'Full Marks', points:5},{description:'No Marks', points:0}]});
 		});
 
 		rubric.criterion.forEach(addCriteria);
 		rubric.criterion.subscribe('add', true, function(key, value) {
 			addCriteria(value);
 		});
+		rubric.subscribe('criterion', function() {
+			var totalPoints=0;
+			rubric.criterion.forEach(function(criteria) {
+				if (criteria.totalPoints) totalPoints+=criteria.totalPoints;
+			});
+			totalPointsElement.text('Total Points: ' +totalPoints)
+		});
 
 		function addCriteria(criteria) {
 			var criteriaRow, ratingsRow;
+			//editable=false
 			criteriaRow=Element('tr', {class: 'criteriaRow'}).append(
 				Element('td').append(
 					(editable ?
@@ -581,12 +590,9 @@ function renderApp() {
 						)
 					)
 				),
-				Element('td', {class: 'collapsing'}).append(
-					(editable?
-						Element('input', {type:'text'}).model(criteria, 'totalPoints').on('keydown', isNumberKey)
-						:
-						Element('span').model(criteria, 'totalPoints')
-					)
+				Element('td', {class: 'collapsing totalPoints'}).append(
+					Element('span').model(criteria, 'totalPoints'),
+					" pts"
 				),
 				Element('td', {class: 'collapsing delete'}).append(
 					Element('i', {class: 'trash alternate icon'}).click(function(e) {
@@ -606,10 +612,29 @@ function renderApp() {
 			criteriaBody.append(criteriaRow);
 			criteria.subscribe('deleted', true, function(){criteriaRow.remove()});
 			function addRating(rating) {
-				//TODO
-				ratingsRow.append(
-					Element('td').model(rating, 'description')
-				)
+				var ratingCell = Element('td');
+				if (editable) {
+					ratingCell.append(
+						Element('input', {type:'text'}).model(rating, 'points').on('keydown', isNumberKey),
+						" pts",
+						Element('div', {class:'ui form'}).append(
+							Element('div', {class:'field'}).append(
+								Element('textarea').model(rating, 'description')
+							)
+						)
+					)
+				}
+				else {
+					ratingCell.append(
+						Element('span').model(rating, 'points'), " pts",
+						Element('div').model(rating, 'description')
+					)
+				}
+
+				ratingsRow.append(ratingCell);
+				rating.subscribe('points', true, function() {
+					criteria.updateTotalPoints();
+				});
 			}
 		}
 

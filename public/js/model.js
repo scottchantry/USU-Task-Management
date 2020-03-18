@@ -82,6 +82,11 @@ var model = {
 			rubric: {type: 'rubric', reciprocal: 'criterion'},
 			ratings: {plural: "rubricRatings", cascadeSave: true, cascadeDelete: true}
 		},
+		methods:{
+			updateTotalPoints:function() {
+				this.totalPoints=this.ratings.at(0).points || 0;
+			}
+		},
 		plural: 'rubricCriterion',
 		bubbleEvents: {to: "rubric"}
 	},

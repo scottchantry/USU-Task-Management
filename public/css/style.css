@@ -35,10 +35,16 @@ td.delete>i:hover {opacity: 1}
 	padding:0;
 	position:relative;
 }
+.ui.table > tbody > tr.criteriaRow > td.totalPoints {width:80px}
+.ui.table > tbody > tr.criteriaRow > td.totalPoints > input {width:50px}
+
 .ui.ratingTable {
-	position:absolute;
+	/*position:absolute;
 	top:0;
-	bottom:0;
+	bottom:0;*/
 	height:100%;
 }
+.ui.table.ratingTable {border:none}
 .ui.ratingTable td:not(:last-child) {border-right: 1px dashed rgba(34,36,38,.3)}
+.ui.ratingTable .ui.form > .field > textarea {margin-top:5px}
+.rubricTotalPoints {float:right;margin-top:5px}
