@@ -40,8 +40,7 @@ function renderApp() {
 	}
 	else groupElement=Element('span').model(currentGroup, 'name');
 	links = {
-		home: new Link({name: 'Home', default: true, renderScreen: renderHomeScreen}),
-		tasks: new Link({name: 'Tasks', renderScreen: renderTasksScreen}),
+		tasks: new Link({name: 'Tasks', default: true, renderScreen: renderTasksScreen}),
 		discussions: new Link({name: 'Discussions', renderScreen: renderDiscussionsScreen}),
 		timeline: new Link({name: 'Timeline', renderScreen: renderTimelineScreen}),
 		grading: new Link({name: 'Grading', renderScreen: renderGradingScreen})
@@ -73,12 +72,6 @@ function renderApp() {
 	});
 	if (!currentScreen) menuElement.find('a.active').click();
 	bodyLoader.removeClass('active');
-
-	function renderHomeScreen(link) {
-		var homeElement = Element('div').text('Home Screen');
-
-		link[currentGroup.id].screen = new Screen({element: homeElement});
-	}
 
 	function renderTasksScreen(link) {
 		var tasksBody, theGroup = currentGroup, newTaskButton;
