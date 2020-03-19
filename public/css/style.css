@@ -48,3 +48,56 @@ td.delete>i:hover {opacity: 1}
 .ui.ratingTable td:not(:last-child) {border-right: 1px dashed rgba(34,36,38,.3)}
 .ui.ratingTable .ui.form > .field > textarea {margin-top:5px}
 .rubricTotalPoints {float:right;margin-top:5px}
+
+/* Timeline Screen */
+.screen.timeline .taskName {
+	width:200px;
+	position:absolute;
+	left:1em;
+	top:auto;
+}
+.screen.timeline .tableContainer {
+	width:calc(100% - 200px);
+	margin-left:200px;
+	overflow:auto;
+}
+.screen.timeline .dateColumn {
+	width:50px;
+	position:relative;
+
+}
+.screen.timeline th {height:60px}
+.screen.timeline td {height:38px}
+.screen.timeline .ui.celled.table > thead > tr > th.taskName {border-top: 1px solid rgba(34,36,38,.15);border-left: 1px solid rgba(34,36,38,.15)}
+.screen.timeline .ui.celled.table > tbody > tr > td.taskName {border-left: 1px solid rgba(34,36,38,.15)}
+.screen.timeline .ui.celled.table > tbody > tr:last-child > td.taskName {border-bottom: 1px solid rgba(34,36,38,.15)}
+.screen.timeline td.dateColumn.start > div {
+	background-color: #2185d0;
+	position: absolute;
+	top: 6px;
+	bottom:6px;
+	left: 4px;
+	right:-1px;
+	border-top-left-radius: 5px;
+	border-bottom-left-radius: 5px;
+	z-index:10
+}
+.screen.timeline td.dateColumn.through > div {
+	background-color: #2185d0;
+	position: absolute;
+	top: 6px;
+	bottom:6px;
+	left:0;
+	right:-1px;
+	z-index:10
+}
+.screen.timeline td.dateColumn.end > div {
+	background-color: #2185d0;
+	position: absolute;
+	top: 6px;
+	bottom:6px;
+	left: 0;
+	right:4px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+}

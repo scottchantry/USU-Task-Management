@@ -490,8 +490,83 @@ function renderApp() {
 	}
 
 	function renderTimelineScreen(link) {
-		var timelineElement = Element('div').text('Timeline Screen');
-		link[currentGroup.id].screen = new Screen({element: timelineElement});
+		var theGroup = currentGroup, timelineHead, timelineBody, startDate, endDate, numOfDays;
+		var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+		var timelineElement = Element('div', {class: 'ui raised segment'}).append(
+			Element('div', {class:'tableContainer'}).append(
+				Element('table', {class: 'ui celled striped table'}).append(
+					timelineHead = Element('thead'),
+					timelineBody = Element('tbody')
+				)
+			)
+		);
+		//TODO need to determine start and end dates
+		//Start would be earliest start date
+		//End would be lastest end date of tasks
+		startDate=new Date(2020, 2, 1);
+		endDate=new Date(2020, 4, 1);
+		numOfDays = Math.round((endDate.getTime()-startDate.getTime()) / (1000 * 3600 * 24));
+
+		renderTimeline();
+
+		theGroup.tasks.subscribe('add', true, function(key, value) {
+			renderTimeline();
+		});
+
+		link[currentGroup.id].screen = new Screen({element: timelineElement, class:'timeline'});
+
+		function renderTimeline() {
+			var headerRow;
+			timelineHead.empty();
+			timelineBody.empty();
+			timelineHead.append(
+				headerRow=Element('tr').append(
+					Element('th', {class:'taskName'}).text('Task Name')
+				)
+			);
+			renderHeaderDates();
+			theGroup.tasks.forEach(renderTaskRow);
+			//TODO subscribe to each task start and end dates and re-render timeline
+			function renderHeaderDates() {
+				var loopDate=new Date(startDate.getTime());
+				for (var i=0; i<=numOfDays; i++) {
+					headerRow.append(
+						Element('th', {class:'dateColumn'}).text(months[loopDate.getMonth()]+' '+loopDate.getDate())
+					)
+					loopDate.addDays(1);
+				}
+			}
+		}
+
+		function renderTaskRow(task) {
+			var taskRow, cell, loopDate, started=false
+			taskRow=Element('tr').append(
+				Element('td', {class:'taskName'}).model(task, 'name')
+			);
+			loopDate=new Date(startDate.getTime());
+
+			for (var i=0; i<=numOfDays; i++) {
+				taskRow.append(
+					cell=Element('td', {class:'dateColumn'}).append(Element('div'))
+				)
+				if (sameDate(loopDate, task.startDate)) {
+					cell.addClass('start');
+					started=true;
+				}
+				else if (sameDate(loopDate, task.endDate)) {
+					cell.addClass('end');
+					started=false;
+				}
+				else if (started) {cell.addClass('through')}
+				loopDate.addDays(1);
+			}
+
+			timelineBody.append(taskRow);
+			function sameDate(date1, date2) {
+				if (!date1 || ! date2) return false;
+				return date1.getFullYear()===date2.getFullYear() && date1.getMonth()===date2.getMonth() && date1.getDate()===date2.getDate();
+			}
+		}
 	}
 
 	function renderGradingScreen(link) {
@@ -728,6 +803,9 @@ window.Date.prototype.formatTime = function() {
 	}
 	else return '';
 };
+window.Date.prototype.addDays = function(days) {
+	this.setDate(this.getDate() + days);
+}
 jQuery.fn.extend({
 	model: function(model, field, saved, placeholder, afterProcess) {
 		if (!model) {
