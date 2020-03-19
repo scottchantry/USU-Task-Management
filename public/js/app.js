@@ -490,7 +490,7 @@ function renderApp() {
 	}
 
 	function renderTimelineScreen(link) {
-		var theGroup = currentGroup, timelineHead, timelineBody, startDate, endDate, numOfDays;
+		var theGroup = currentGroup, timelineHead, timelineBody;
 		var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 		var timelineElement = Element('div', {class: 'ui raised segment'}).append(
 			Element('div', {class:'tableContainer'}).append(
@@ -500,23 +500,16 @@ function renderApp() {
 				)
 			)
 		);
-		//TODO need to determine start and end dates
-		//Start would be earliest start date
-		//End would be lastest end date of tasks
-		startDate=new Date(2020, 2, 1);
-		endDate=new Date(2020, 4, 1);
-		numOfDays = Math.round((endDate.getTime()-startDate.getTime()) / (1000 * 3600 * 24));
-
 		renderTimeline();
 
-		theGroup.tasks.subscribe('add', true, function(key, value) {
+		theGroup.tasks.subscribe('add', true, function() {
 			renderTimeline();
 		});
 
 		link[currentGroup.id].screen = new Screen({element: timelineElement, class:'timeline'});
 
 		function renderTimeline() {
-			var headerRow;
+			var headerRow, startDate, endDate, numOfDays;
 			timelineHead.empty();
 			timelineBody.empty();
 			timelineHead.append(
@@ -524,9 +517,12 @@ function renderApp() {
 					Element('th', {class:'taskName'}).text('Task Name')
 				)
 			);
+			calculateDates();
 			renderHeaderDates();
-			theGroup.tasks.forEach(renderTaskRow);
-			//TODO subscribe to each task start and end dates and re-render timeline
+			theGroup.tasks.forEach(function(task) {
+				renderTaskRow(task);
+				task.subscribe(['startDate','endDate'], true, renderTimeline);
+			});
 			function renderHeaderDates() {
 				var loopDate=new Date(startDate.getTime());
 				for (var i=0; i<=numOfDays; i++) {
@@ -535,36 +531,49 @@ function renderApp() {
 					)
 					loopDate.addDays(1);
 				}
+				headerRow.append(Element('th', {class:'spacer'}));
 			}
-		}
-
-		function renderTaskRow(task) {
-			var taskRow, cell, loopDate, started=false
-			taskRow=Element('tr').append(
-				Element('td', {class:'taskName'}).model(task, 'name')
-			);
-			loopDate=new Date(startDate.getTime());
-
-			for (var i=0; i<=numOfDays; i++) {
-				taskRow.append(
-					cell=Element('td', {class:'dateColumn'}).append(Element('div'))
-				)
-				if (sameDate(loopDate, task.startDate)) {
-					cell.addClass('start');
-					started=true;
+			function calculateDates() {
+				theGroup.tasks.forEach(function(task) {
+					if (!startDate || task.startDate < startDate) startDate=task.startDate;
+					if (!endDate || task.endDate > endDate) endDate=task.endDate;
+				});
+				if (!startDate) {
+					var today=new Date();
+					startDate=new Date(today.getFullYear(), today.getMonth(), today.getDate());
+					endDate=new Date(today.getFullYear(), today.getMonth(), today.getDate());
 				}
-				else if (sameDate(loopDate, task.endDate)) {
-					cell.addClass('end');
-					started=false;
-				}
-				else if (started) {cell.addClass('through')}
-				loopDate.addDays(1);
+				numOfDays = Math.round((endDate.getTime()-startDate.getTime()) / (1000 * 3600 * 24));
 			}
+			function renderTaskRow(task) {
+				var taskRow, cell, loopDate, started=false
+				taskRow=Element('tr').append(
+					Element('td', {class:'taskName'}).model(task, 'name')
+				);
+				loopDate=new Date(startDate.getTime());
 
-			timelineBody.append(taskRow);
-			function sameDate(date1, date2) {
-				if (!date1 || ! date2) return false;
-				return date1.getFullYear()===date2.getFullYear() && date1.getMonth()===date2.getMonth() && date1.getDate()===date2.getDate();
+				for (var i=0; i<=numOfDays; i++) {
+					taskRow.append(
+						cell=Element('td', {class:'dateColumn'}).append(Element('div'))
+					)
+					if (sameDate(loopDate, task.startDate)) {
+						cell.addClass('start');
+						started=true;
+					}
+					else if (sameDate(loopDate, task.endDate)) {
+						cell.addClass('end');
+						started=false;
+					}
+					else if (started) {cell.addClass('through')}
+					loopDate.addDays(1);
+				}
+				taskRow.append(Element('td', {class:'spacer'}));
+
+				timelineBody.append(taskRow);
+				function sameDate(date1, date2) {
+					if (!date1 || ! date2) return false;
+					return date1.getFullYear()===date2.getFullYear() && date1.getMonth()===date2.getMonth() && date1.getDate()===date2.getDate();
+				}
 			}
 		}
 	}
