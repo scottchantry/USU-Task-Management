@@ -546,9 +546,9 @@ function renderApp() {
 				numOfDays = Math.round((endDate.getTime()-startDate.getTime()) / (1000 * 3600 * 24));
 			}
 			function renderTaskRow(task) {
-				var taskRow, cell, loopDate, started=false
+				var taskRow, taskNameCell, cell, loopDate, started=false
 				taskRow=Element('tr').append(
-					Element('td', {class:'taskName'}).model(task, 'name')
+					taskNameCell=Element('td', {class:'taskName'}).model(task, 'name')
 				);
 				loopDate=new Date(startDate.getTime());
 
@@ -568,7 +568,9 @@ function renderApp() {
 					loopDate.addDays(1);
 				}
 				taskRow.append(Element('td', {class:'spacer'}));
-
+				task.subscribe('name', function() {
+					taskNameCell.attr('title', task.name);
+				});
 				timelineBody.append(taskRow);
 				function sameDate(date1, date2) {
 					if (!date1 || ! date2) return false;

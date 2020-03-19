@@ -51,14 +51,17 @@ td.delete>i:hover {opacity: 1}
 
 /* Timeline Screen */
 .screen.timeline .taskName {
-	width:200px;
+	width:300px;
 	position:absolute;
 	left:1em;
 	top:auto;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .screen.timeline .tableContainer {
-	width:calc(100% - 200px);
-	margin-left:200px;
+	width:calc(100% - 300px);
+	margin-left:300px;
 	overflow:auto;
 }
 .screen.timeline .dateColumn {
