@@ -64,7 +64,7 @@ td.delete>i:hover {opacity: 1}
 .screen.timeline .dateColumn {
 	width:50px;
 	position:relative;
-
+	text-align:center;
 }
 .screen.timeline th {height:60px}
 .screen.timeline td {height:38px}
