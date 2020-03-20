@@ -50,8 +50,8 @@ function loadSession(sessionID, canvasData, cb) {
 			groups: groups
 		}, function(model) {
 			var onlyForGroupID;
+			model._set('users', sessionCache.og.users);
 			if (canvasData.roleID === 1) { //Instructor
-				//TODO anything different??
 				instructorLoaded = true;
 			}
 			else if (canvasData.roleID === 2) {

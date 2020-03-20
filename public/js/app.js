@@ -119,8 +119,14 @@ function renderApp() {
 						e.stopPropagation();
 						deleteModal('Delete Task', "Are you sure you want to delete the following task?<br><br>"+task.name, function(deleteTask) {
 							if (deleteTask) {
-								task.erase();
-								//TODO task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
+								if (task.isNewUnsaved()) task.erase();
+								else {
+									task.deleted=true;
+									task.save(function(result){
+										if (result instanceof Error) return session.publish("error", err);
+										else task.erase();
+									});
+								}
 							}
 						});
 					})
@@ -193,8 +199,14 @@ function renderApp() {
 							e.stopPropagation();
 							deleteModal('Delete Task Assignment', "Are you sure you want to delete the task assignment for "+assignment.user.name+"?", function(deleteAssignment) {
 								if (deleteAssignment) {
-									assignment.erase();
-									//TODO task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
+									if (assignment.isNewUnsaved()) assignment.erase();
+									else {
+										assignment.deleted=true;
+										task.save(function(result){
+											if (result instanceof Error) return session.publish("error", err);
+											else assignment.erase();
+										});
+									}
 								}
 							});
 						})
@@ -218,7 +230,7 @@ function renderApp() {
 				function setStatus(status) {
 					return function() {
 						assignment.status=status;
-						//TODO task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
+						if (!task.isNewUnsaved()) task.save(function(result){if (result instanceof Error) return session.publish("error", err);});
 					}
 				}
 			}
@@ -361,7 +373,7 @@ function renderApp() {
 			task.save(function(result) {
 				if (result instanceof Error) return session.publish("error", result);
 				saveButton.removeClass('loading');
-				task.publish('updateButton');
+				setImmediate(function(){saveButton.addClass('disabled')});
 			});
 		});
 
@@ -388,7 +400,9 @@ function renderApp() {
 						e.stopPropagation();
 						deleteModal('Delete Task Assignment', "Are you sure you want to delete the task assignment for "+assignment.user.name+"?", function(deleteAssignment) {
 							if (deleteAssignment) {
-								assignment.erase();
+								if (assignment.isNewUnsaved()) assignment.erase();
+								else assignment.deleted=true;
+								assignmentRow.remove();
 							}
 						});
 					})
@@ -629,7 +643,9 @@ function renderApp() {
 			)
 		);
 		saveRubricButton.click(function() {
-			alert('save me please')
+			rubric.save(function(result){
+				if (result instanceof Error) return session.publish("error", err);
+			});
 		});
 		newCriteriaButton.click(function() {
 			og.add('rubricCriteria', {rubric:rubric, totalPoints:5, ratings:[{description:'Full Marks', points:5},{description:'No Marks', points:0}]});
@@ -649,7 +665,6 @@ function renderApp() {
 
 		function addCriteria(criteria) {
 			var criteriaRow, ratingsRow;
-			//editable=false
 			criteriaRow=Element('tr', {class: 'criteriaRow'}).append(
 				Element('td').append(
 					(editable ?
@@ -678,7 +693,9 @@ function renderApp() {
 						e.stopPropagation();
 						deleteModal('Delete Criteria', "Are you sure you want to delete this criteria?", function(deleteCriteria) {
 							if (deleteCriteria) {
-								criteria.erase();
+								if (criteria.isNewUnsaved()) criteria.erase();
+								else criteria.deleted=true;
+								criteriaRow.remove();
 							}
 						});
 					})
@@ -722,13 +739,6 @@ function renderApp() {
 }
 
 function loadSession(cb) {
-	var fakeSession = JSON.parse('{"id":"9AfuX1pJdNqmNMRAViMGJ5p09RctjPBm","user":{"id":2,"name":"Scott Chantry","role":1},"course":{"id":1,"name":"Sample Course 101"},"assignment":{"id":1,"name":"Test","courseID":1,"rubric":{"id":1,"title":"MyRubric","criterion":[]}},"groups":[{"id":1,"name":"Group 1","members":[{"id":3,"name":"Jenalee Chantry","role":2}],"tasks":[{"id":1,"name":"Task1","description":"This is task 1","startDate":1583391600000,"endDate":1583733600000,"groupTask":false,"taskAssignments":[{"id":1,"status":1,"canvasUserID":3}],"discussions":[],"canvasAssignmentID":1},{"id":2,"name":"Task2","description":"This is task 2","startDate":1583820000000,"endDate":1584597600000,"groupTask":false,"taskAssignments":[{"id":2,"status":2,"canvasUserID":3}],"discussions":[],"canvasAssignmentID":1}],"discussions":[],"courseID":1},{"id":2,"name":"Group2","members":[],"tasks":[],"discussions":[],"courseID":1}]}');
-	fakeSession.groups[0].discussions.push({created:new Date(2020,1,1,10,10,0,0), text:"Discussion text", canvasUserID:2});
-	fakeSession.groups[0].discussions.push({created:new Date(2020,2,2,13,10,0,0), text:"Discussion text2", canvasUserID:3});
-
-	og.add('session', fakeSession, cb);
-	return;//TODO remove this
-
 	if (!cb) throw "no callback";
 	var path = 'service/session';
 	var jqxhr = $.ajax({

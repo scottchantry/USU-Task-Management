@@ -48,7 +48,7 @@ var model = {
 			id: 'long',
 			name: 'string',
 			course: {type: "course", key: "courseID"},
-			members: {plural: "users", cascadeSave: true},
+			members: {plural: "users"},
 			tasks: {plural: "tasks", cascadeSave: true},
 			discussions: {plural: "discussions", cascadeSave: true}
 		},
@@ -71,6 +71,7 @@ var model = {
 			assignment: {type: 'assignment', key: "canvasAssignmentID"},
 			criterion: {plural: "rubricCriterion", cascadeSave: true, cascadeDelete: true}
 		},
+		fullSave:true,
 		plural: 'rubrics'
 	},
 	rubricCriteria: {
@@ -107,10 +108,11 @@ var model = {
 		members: {
 			id: 'string',
 			created: 'date',
-			user: {type: "user", key: "userID", cascadeSave: true},
+			user: {type: "user", key: "userID"},
 			course: {type: "course", key: "courseID", cascadeSave: true},
 			assignment: {type: "assignment", key: "assignmentID", cascadeSave: true},
-			groups: {plural: "groups", cascadeSave: true}
+			groups: {plural: "groups", cascadeSave: true},
+			users: {plural: "users", cascadeSave:true}
 		},
 		plural: 'sessions'
 	},
@@ -143,6 +145,7 @@ var model = {
 				return true;
 			}
 		},
+		fullSave:true,
 		plural: 'tasks'
 	},
 	taskAssignment: {

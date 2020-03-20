@@ -383,6 +383,7 @@ function setModelMethods(schemas, og) {
 			{name: 'key', dataType: db.dataTypes.Int, value: model.id},
 			{name: 'rubricCriteriaID', dataType: db.dataTypes.Int, value: model.rubricCriteria.id},
 			{name: 'canvasGroupID', dataType: db.dataTypes.Int, value: (model.group && model.group.id)},
+			{name: 'description', dataType: db.dataTypes.NVarChar, value: model.description},
 			{name: 'points', dataType: db.dataTypes.Decimal, value: model.points}
 		];
 		db.executeSQL(query, parameters, function(err, rows) {
@@ -445,7 +446,7 @@ function setModelMethods(schemas, og) {
 			{name: 'startDate', dataType: db.dataTypes.Date, value: model.startDate},
 			{name: 'endDate', dataType: db.dataTypes.Date, value: model.endDate},
 			{name: 'canvasGroupID', dataType: db.dataTypes.Int, value: (model.group && model.group.id)},
-			{name: 'groupTask', dataType: db.dataTypes.Bit, value: model.groupTask}
+			{name: 'groupTask', dataType: db.dataTypes.Bit, value: false}
 		];
 		db.executeSQL(query, parameters, function(err, rows) {
 			if (err) return cb(err);
