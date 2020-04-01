@@ -533,10 +533,15 @@ function renderApp() {
 			);
 			calculateDates();
 			renderHeaderDates();
-			theGroup.tasks.forEach(function(task) {
+			theGroup.tasks.sort(byStartDate).forEach(function(task) {
 				renderTaskRow(task);
 				task.subscribe(['startDate','endDate'], true, renderTimeline);
 			});
+			function byStartDate(a, b) {
+				if (a.startDate < b.startDate) return -1;
+				if (a.startDate > b.startDate) return 1;
+				return 0;
+			}
 			function renderHeaderDates() {
 				var loopDate=new Date(startDate.getTime());
 				for (var i=0; i<=numOfDays; i++) {
