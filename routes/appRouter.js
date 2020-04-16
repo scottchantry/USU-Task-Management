@@ -25,6 +25,7 @@ router.post('/service/rubric', function(req, res, next) {
 	var sessionID = req.session.id, sessionCache = sessions[sessionID];
 	//TODO privilege check
 	var rubrics = sessionCache.og.add(req.body).rubrics;
+	if (!sessionCache.og.sessions.at(0).assignment.rubric) sessionCache.og.sessions.at(0).assignment.rubric = rubrics.at(0);
 	rubrics.save(function(err) {
 		if (err) res.json(utils.exception(err));
 		else res.json(rubrics.serialize()[0]);
