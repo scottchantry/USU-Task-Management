@@ -601,7 +601,7 @@ function renderApp() {
 
 	function renderGradingScreen(link) {
 		var editable=session.user.isInstructor(), rubric=og.rubrics.at(0), saveRubricButton, criteriaBody, newCriteriaButton, totalPointsElement;
-		if (!rubric) rubric = og.add('rubric', {});
+		if (!rubric) rubric = og.add('rubric', {canvasAssignmentID:session.assignment.id});
 		var gradingElement = Element('div', {class: 'ui raised segment'}).append(
 			saveRubricButton=Element('button', {class:'mini ui labeled icon button'}).append(
 				Element('i', {class:'save icon'}),
