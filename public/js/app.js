@@ -607,7 +607,7 @@ function renderApp() {
 				Element('i', {class:'save icon'}),
 				"Save"
 			),
-			Element('table', {class: 'ui celled single line table'}).append(
+			Element('table', {class: 'ui celled table'}).append(
 				Element('thead').append(
 					Element('tr').append(
 						Element('th', {colspan:4}).append(
@@ -648,14 +648,20 @@ function renderApp() {
 				)
 			)
 		);
-		saveRubricButton.click(function() {
-			rubric.save(function(result){
-				if (result instanceof Error) return session.publish("error", err);
+		if (editable) {
+			saveRubricButton.click(function() {
+				rubric.save(function(result){
+					if (result instanceof Error) return session.publish("error", err);
+				});
 			});
-		});
-		newCriteriaButton.click(function() {
-			og.add('rubricCriteria', {rubric:rubric, totalPoints:5, ratings:[{description:'Full Marks', points:5},{description:'No Marks', points:0}]});
-		});
+			newCriteriaButton.click(function() {
+				og.add('rubricCriteria', {rubric:rubric, totalPoints:5, ratings:[{description:'Full Marks', points:5},{description:'No Marks', points:0}]});
+			});
+		}
+		else {
+			saveRubricButton.remove();
+			newCriteriaButton.remove();
+		}
 
 		rubric.criterion.forEach(addCriteria);
 		rubric.criterion.subscribe('add', true, function(key, value) {
