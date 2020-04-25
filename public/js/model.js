@@ -80,7 +80,7 @@ var model = {
 			id: 'long',
 			description: 'string',
 			totalPoints: 'long',
-			rubric: {type: 'rubric', reciprocal: 'criterion'},
+			rubric: {type: 'rubric', key:'rubricID', reciprocal: 'criterion'},
 			ratings: {plural: "rubricRatings", cascadeSave: true, cascadeDelete: true}
 		},
 		methods:{
@@ -98,7 +98,7 @@ var model = {
 			description: 'string',
 			points: 'long',
 			group: {type: "group", key: "canvasGroupID"},
-			rubricCriteria: {type: 'rubricCriteria', reciprocal: 'ratings'}
+			rubricCriteria: {type: 'rubricCriteria', key:'rubricCriteriaID', reciprocal: 'ratings'}
 		},
 		plural: 'rubricRatings',
 		bubbleEvents: {to: "rubricCriteria"}
